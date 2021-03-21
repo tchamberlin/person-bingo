@@ -59,9 +59,6 @@
     <div class="p-2">
       <h1>Create Bingo</h1>
     </div>
-    <div class="p-2">
-      <a class="btn btn-primary" href="./bingo.html" id="go-to-bingo-board">Jump to Board</a>
-    </div>
   </div>
   <p>
     Let's make a bingo board! All you need to do is enter <strong>at least</strong> 25 lines of text. Once you're done, you'll get a link to your board.
