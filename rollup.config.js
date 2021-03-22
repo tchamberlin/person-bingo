@@ -3,6 +3,8 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
+import sveltePreprocess from 'svelte-preprocess';
+import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
 
 const production = !process.env.ROLLUP_WATCH;
@@ -29,7 +31,7 @@ function serve() {
 }
 
 const genBundleConfig = (name) => ({
-  input: `src/${name}.js`,
+  input: `src/${name}.ts`,
   output: {
     sourcemap: true,
     format: 'iife',
@@ -38,7 +40,8 @@ const genBundleConfig = (name) => ({
   },
   plugins: [
     svelte({
-      compilerOptions: {
+      preprocess: sveltePreprocess({ sourceMap: !production }),
+			compilerOptions: {
         // enable run-time checks when not in production
         dev: !production
       }
@@ -53,6 +56,12 @@ const genBundleConfig = (name) => ({
       dedupe: ['svelte']
     }),
     commonjs(),
+		typescript({
+			// sourceMap: !production,
+      sourceMap: true,
+			// inlineSources: !production
+      inlineSources: true
+		}),
     // we'll extract any component CSS out into
     // a separate file - better for performance
     css({ output: `${name}.css` }),
