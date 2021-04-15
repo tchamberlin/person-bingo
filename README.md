@@ -29,8 +29,6 @@ npm run dev
 
 ## Deployment
 
-```bash
-npm run build
-```
+This app is deployed via Vercel to [https://person-bingo.vercel.app](https://person-bingo.vercel.app)
 
-Builds go to `/public`. Deployment is currently as simple as `rsync`ing this directory somewhere. This is a purely static (client-side) application.
+Remember to update the package version, then simply push to `main` in order to deploy

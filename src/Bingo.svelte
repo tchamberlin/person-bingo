@@ -84,10 +84,6 @@
       // Delete previous board
       localStorage.removeItem('bingo-board');
       prompts = [...prompts, ...shuffle(suggestions, random).slice(0, num_prompts_to_fill)];
-      console.log('shuffle(suggestions, random)', shuffle(suggestions, random));
-      console.log('suggestions', suggestions);
-      console.log('prompts', prompts);
-      console.log(`Loaded ${num_prompts_to_fill} suggestions`, suggestions);
     }
     prompts = shuffle(prompts, random);
     const middle_i: number = 12;
@@ -187,7 +183,6 @@
 
   function checkBlackoutWin(board: Board): void {
     let win = true;
-    console.log('board', board);
     board.forEach((row: Array<Cell>) =>
       row.forEach((cell: Cell) => {
         if (!cell.state.found || cell.state.duplicate) {
@@ -197,7 +192,6 @@
       })
     );
 
-    console.log;
     let wonCells = [];
     if (win) {
       board.forEach((row, ri: number) =>
@@ -279,7 +273,6 @@
   const BINGO_LETTERS = 'BINGO';
   const url: URL = new URL(location.href);
   let WIN_CONDITION = url.searchParams.get(WIN_CONDITION_PARAM_KEY) || 'line';
-  console.log('WIN_CONDITION', WIN_CONDITION);
 
   const RULES = {
     line: {
@@ -299,7 +292,6 @@
     },
   };
 
-  console.log('url length', url.toString().length);
   // If 'clear' is given as a param, regardless of its value, user has requested
   // a board reset
   const resetBoardRequested: boolean = url.searchParams.get('clear') !== null;

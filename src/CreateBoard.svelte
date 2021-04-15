@@ -39,7 +39,6 @@
 
   function handlePhrasesChange(): void {
     const phrases_array = PHRASES_STR.split('\n').filter((phrase) => phrase.trim() !== '');
-    console.log('phrases_array', phrases_array);
     NUM_PHRASES = phrases_array.length;
     PHRASES_LEFT = EXPECTED_PHRASES - NUM_PHRASES;
     if (PHRASES_LEFT < 0) {
