@@ -1,18 +1,8 @@
-<style type="text/css">
-  .invalid {
-    color: red;
-    font-weight: bold;
-  }
-  .valid {
-    color: green;
-    font-weight: bold;
-  }
-</style>
-
 <script lang="ts">
   import seedrandom from 'seedrandom';
   import suggestions from './suggested_prompts';
   import {shuffle, genRandomString} from './utils';
+  import Nav from './Nav.svelte';
 
   function handleCopyToClipboard(): void {
     const phrasesText = document.getElementById('go-to-bingo-board') as HTMLAnchorElement;
@@ -38,6 +28,7 @@
 
   function handlePhrasesChange(): void {
     const phrases_array = PHRASES_STR.split('\n').filter((phrase) => phrase.trim() !== '');
+    console.log("phrases_array", phrases_array)
     NUM_PHRASES = phrases_array.length;
     PHRASES_LEFT = EXPECTED_PHRASES - NUM_PHRASES;
     if (PHRASES_LEFT < 0) {
@@ -60,7 +51,7 @@
     console.log("PHRASES_LEFT", PHRASES_LEFT)
     console.log("NUM_PHRASES", NUM_PHRASES)
     console.log("shuffle(suggestions, random)", shuffle(suggestions, random))
-    PHRASES_STR += shuffle(suggestions, random).slice(0, PHRASES_LEFT).join("\n")
+    PHRASES_STR = [PHRASES_STR, ...shuffle(suggestions, random).slice(0, PHRASES_LEFT)].join("\n")
     handlePhrasesChange()
   }
 
@@ -77,55 +68,57 @@
   let win_condition = "line";
 </script>
 
-<div class="container">
-  <div class="d-flex flex-row align-items-center">
-    <div class="p-2">
-      <h1>Create Bingo</h1>
-    </div>
-    <div class="p-2">
-      <button on:click="{loadSuggestedPrompts}">Fill Suggested Prompts</button>
-    </div>
-  </div>
-  <p>
-    Let's make a bingo board! All you need to do is enter <strong>at least</strong> 25 lines of text.
-    Once you're done, you'll get a link to your board.
-  </p>
+<body>
+  <Nav active="create" />
+  <main role="main" class="container">
+    <h1>Create Bingo</h1>
+    <p>
+      Let's make a bingo board! All you need to do is enter <strong>at least</strong> 25 lines of text.
+      Once you're done, you'll get a link to your board.
+    </p>
 
-  <form on:submit|preventDefault="{null}" id="wordsform" class="form">
-    <label for="win-conditions">Win Condition</label>
-    <select name="win-conditions" id="win-conditions" bind:value={win_condition}>
-       <option value="line">Line (horizontal, vertical, diagonal)</option>
-       <option value="four-corners">Four Corners</option>
-       <option value="blackout">Blackout</option>
-    </select>
+    <form on:submit|preventDefault="{() => null}" id="wordsform" class="form">
+      <div class="form-group">
+        <label for="win-conditions">Win Condition (Board Pattern)</label>
+        <select class="form-control" name="win-conditions" id="win-conditions" bind:value={win_condition} on:change="{() => genBingoUrl()}">
+           <option value="line">Line (horizontal, vertical, diagonal)</option>
+           <option value="four-corners">Four Corners</option>
+           <option value="blackout">Blackout</option>
+        </select>
+      </div>
 
-    <textarea
-      name="phrases"
-      form="wordsform"
-      bind:value="{PHRASES_STR}"
-      on:input="{handlePhrasesChange}"
-      placeholder="Enter phrases, one per line"
-      class="form-control"
-      id="phrases-text"></textarea>
-    <br />
-    {#if IS_VALID}
-      <p>
+      <div class="form-group">
+        <label for="phrases-text">Prompts</label>
+        <textarea
+          name="phrases"
+          form="wordsform"
+          bind:value="{PHRASES_STR}"
+          on:input="{handlePhrasesChange}"
+          placeholder="Enter phrases, one per line"
+          class="form-control"
+          id="phrases-text"
+        />
+      </div>
+      <br />
+      <div>
+        {#if IS_VALID}
         <a class="btn btn-primary" href="{BINGO_URL}" id="go-to-bingo-board">Go to Bingo Board</a>
         <button class="btn btn-info" on:click="{handleCopyToClipboard}">
           📋 Copy link to clipboard 📋
         </button>
-      </p>
-      <p><strong>Give this link to everyone that is playing bingo!</strong></p>
-    {:else}
-      <p>
-        You've entered <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}"
-          >{NUM_PHRASES}/{EXPECTED_PHRASES}</span
-        >
-        required phrases (<span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}"
-          >{PHRASES_LEFT}</span
-        > remaining)
-      </p>
-      <p>Once you're done, a button will appear here that will navigate you to your board!</p>
-    {/if}
-  </form>
-</div>
+        {:else}
+        <button class="btn btn-secondary" on:click="{loadSuggestedPrompts}">Fill Suggested Prompts</button>
+        <p>
+          You've entered <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}"
+            >{NUM_PHRASES}/{EXPECTED_PHRASES}</span
+          >
+          required phrases (<span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}"
+            >{PHRASES_LEFT}</span
+          > remaining)
+        </p>
+
+        {/if}
+      </div>
+    </form>
+  </main>
+</body>

@@ -41,12 +41,14 @@
   .table th {
     padding: 0.5rem;
   }
+
 </style>
 
 <script lang="ts">
   import seedrandom from 'seedrandom';
   import suggestions from './suggested_prompts';
   import {genRandomString, chunk, shuffle} from './utils.ts';
+  import Nav from './Nav.svelte';
 
   interface Cell {
     title: string;
@@ -320,7 +322,7 @@
 
     checkBoard(board);
   }
-  // url.searchParams.delete(CELL_PARAM_KEY)
+  url.searchParams.delete(CELL_PARAM_KEY)
   if (window.location.toString() !== url.href) {
     window.location.assign(url.href)
 
@@ -328,103 +330,104 @@
 
   let userIsSureTheyWantToSubmit = false;
   let userIsSureTheyWantToClear = false;
+  let nav_open = false;
 </script>
 
-<div class="container">
-  {#if board.length}
-    <div class="d-flex flex-row align-items-center">
-      <div class="p-2">
+<body>
+  <Nav active="play" />
+  <main role="main" class="container">
+    {#if board.length}
+      <div class="d-flex flex-row align-items-center">
+        <div class="p-2">
+          <h1>Bingo</h1>
+        </div>
+        <div class="p-2">
+          <button
+            on:click="{handleClear}"
+            class="btn btn-sm"
+            class:btn-secondary="{!userIsSureTheyWantToClear}"
+            class:btn-danger="{userIsSureTheyWantToClear}"
+            on:blur="{() => {
+              userIsSureTheyWantToClear = false;
+            }}"
+            title="Clear all text inputs from the board (but keep everything else the same)"
+          >
+            {userIsSureTheyWantToClear ? 'Are You Sure?' : 'Clear Board'}
+          </button>
+        </div>
+        <div class="p-2">
+          <button
+            on:click="{handleSubmit}"
+            class="btn btn-sm"
+            class:btn-warning="{!userIsSureTheyWantToSubmit}"
+            class:btn-danger="{userIsSureTheyWantToSubmit}"
+            on:blur="{() => {
+              userIsSureTheyWantToSubmit = false;
+            }}"
+            title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
+          >
+            {userIsSureTheyWantToSubmit
+              ? 'Are You Sure? This will clear all of your inputs and rearrange your board'
+              : 'Shuffle Board'}
+          </button>
+        </div>
+
+        <div class="ml-auto p-2">
+          <span><strong>{RULES[WIN_CONDITION].name}</strong>: {RULES[WIN_CONDITION].blurb}.</span>
+        </div>
+        {#if VICTORY}
+        <div class="p-2">
+          <span>YOU'VE WON</span>
+        </div>
+        {/if}
+      </div>
+      <table class="table table-bordered">
+        <thead>
+          <th></th>
+          {#each BINGO_LETTERS as letter}
+            <th class="text-center">{letter}</th>
+          {/each}
+        </thead>
+        <tbody>
+          {#each board as row, ri}
+            <tr>
+              <th class="align-middle">{ri + 1}</th>
+              {#each row as cell, ci}
+                <td
+                  class="bingo-cell align-middle {getCellClass(cell)}"
+                  on:click="{() => handleClick(ri, ci)}"
+                >
+                  {#if false}
+                    <code>{JSON.stringify(cell)}</code>
+                  {/if}
+                  <span class="bingo-cell-text">
+                    {cell.title}
+                  </span>
+                  <br />
+                  {#if cell.title !== FREE_SPACE}
+                    <input
+                      on:focus="{() => handleSelectInput(ri, ci)}"
+                      on:blur="{(event) => handleLeaveInput(event, ri, ci)}"
+                      bind:value="{board[ri][ci].value}"
+                      type="text"
+                      id="{ri}x{ci}"
+                      name="{ri}x{ci}"
+                      placeholder="answer"
+                      class="form-control"
+                    />
+                  {/if}
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
+      <div>
         <h1>Bingo</h1>
+        <p>Boards must be at least 25 items! You've probably used an invalid URL.</p>
+        <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
       </div>
-      <div class="p-2">
-        <button
-          on:click="{handleClear}"
-          class="btn"
-          class:btn-secondary="{!userIsSureTheyWantToClear}"
-          class:btn-danger="{userIsSureTheyWantToClear}"
-          on:blur="{() => {
-            userIsSureTheyWantToClear = false;
-          }}"
-          title="Clear all text inputs from the board (but keep everything else the same)"
-        >
-          {userIsSureTheyWantToClear ? 'Are You Sure?' : 'Clear Board'}
-        </button>
-      </div>
-      <div class="p-2">
-        <button
-          on:click="{handleSubmit}"
-          class="btn"
-          class:btn-warning="{!userIsSureTheyWantToSubmit}"
-          class:btn-danger="{userIsSureTheyWantToSubmit}"
-          on:blur="{() => {
-            userIsSureTheyWantToSubmit = false;
-          }}"
-          title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
-        >
-          {userIsSureTheyWantToSubmit
-            ? 'Are You Sure? This will clear all of your inputs and rearrange your board'
-            : 'Shuffle Board'}
-        </button>
-      </div>
-    </div>
-    <div class="d-flex flex-row align-items-center">
-      <div class="p-2">
-        <p>
-          <strong>{RULES[WIN_CONDITION].name}</strong>: {RULES[WIN_CONDITION].blurb}.
-        </p>
-      </div>
-      {#if VICTORY}
-      <div class="p-2">
-        <p>YOU'VE WON</p>
-      </div>
-      {/if}
-    </div>
-    <table class="table table-bordered">
-      <thead>
-        <th></th>
-        {#each BINGO_LETTERS as letter}
-          <th class="text-center">{letter}</th>
-        {/each}
-      </thead>
-      <tbody>
-        {#each board as row, ri}
-          <tr>
-            <th class="align-middle">{ri + 1}</th>
-            {#each row as cell, ci}
-              <td
-                class="bingo-cell align-middle {getCellClass(cell)}"
-                on:click="{() => handleClick(ri, ci)}"
-              >
-                {#if false}
-                  <code>{JSON.stringify(cell)}</code>
-                {/if}
-                <span class="bingo-cell-text">
-                  {cell.title}
-                </span>
-                <br />
-                {#if cell.title !== FREE_SPACE}
-                  <input
-                    on:focus="{() => handleSelectInput(ri, ci)}"
-                    on:blur="{(event) => handleLeaveInput(event, ri, ci)}"
-                    bind:value="{board[ri][ci].value}"
-                    type="text"
-                    id="{ri}x{ci}"
-                    name="{ri}x{ci}"
-                    placeholder="answer"
-                    class="form-control"
-                  />
-                {/if}
-              </td>
-            {/each}
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  {:else}
-    <div>
-      <h1>Bingo</h1>
-      <p>Boards must be at least 25 items! You've probably used an invalid URL.</p>
-      <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
-    </div>
-  {/if}
-</div>
+    {/if}
+  </main>
+</body>

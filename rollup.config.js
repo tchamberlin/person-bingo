@@ -6,6 +6,7 @@ import { terser } from 'rollup-plugin-terser';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
+import image from '@rollup/plugin-image';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -65,6 +66,7 @@ const genBundleConfig = (name) => ({
     // we'll extract any component CSS out into
     // a separate file - better for performance
     css({ output: `${name}.css` }),
+    image(),
     // In dev mode, call `npm run start` once
     // the bundle has been generated
     !production && serve(),
