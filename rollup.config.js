@@ -8,6 +8,7 @@ import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
 import image from '@rollup/plugin-image';
 import copy from 'rollup-plugin-copy';
+import versionInjector from 'rollup-plugin-version-injector';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -46,6 +47,7 @@ const genBundleConfig = (name) => ({
         { src: 'node_modules/bootstrap/dist/css/bootstrap.min.css*', dest: 'public/build/' },
       ],
     }),
+    versionInjector(),
     svelte({
       preprocess: sveltePreprocess({ sourceMap: !production }),
       compilerOptions: {

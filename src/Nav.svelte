@@ -54,7 +54,10 @@
       <Nav class="ml-auto" navbar>
         <NavItem>
           <NavLink href="https://github.com/tchamberlin/person-bingo">
-            <img class="img-link" src="{githubLogo}" alt="GitHub Repo Link" />
+            <span
+              >{'v[VI]{version}[/VI]'}
+              <img class="img-link" src="{githubLogo}" alt="GitHub Repo Link" /></span
+            >
           </NavLink>
         </NavItem>
       </Nav>
