@@ -7,6 +7,7 @@ import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
 import image from '@rollup/plugin-image';
+import copy from 'rollup-plugin-copy';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -22,12 +23,12 @@ function serve() {
       if (server) return;
       server = require('child_process').spawn('npm', ['run', 'start', '--', '--dev'], {
         stdio: ['ignore', 'inherit', 'inherit'],
-        shell: true
+        shell: true,
       });
 
       process.on('SIGTERM', toExit);
       process.on('exit', toExit);
-    }
+    },
   };
 }
 
@@ -37,15 +38,20 @@ const genBundleConfig = (name) => ({
     sourcemap: true,
     format: 'iife',
     name: 'app',
-    file: `public/build/${name}.js`
+    file: `public/build/${name}.js`,
   },
   plugins: [
+    copy({
+      targets: [
+        { src: 'node_modules/bootstrap/dist/css/bootstrap.min.css*', dest: 'public/build/' },
+      ],
+    }),
     svelte({
       preprocess: sveltePreprocess({ sourceMap: !production }),
-			compilerOptions: {
+      compilerOptions: {
         // enable run-time checks when not in production
-        dev: !production
-      }
+        dev: !production,
+      },
     }),
     // If you have external dependencies installed from
     // npm, you'll most likely need these plugins. In
@@ -54,15 +60,15 @@ const genBundleConfig = (name) => ({
     // https://github.com/rollup/plugins/tree/master/packages/commonjs
     resolve({
       browser: true,
-      dedupe: ['svelte']
+      dedupe: ['svelte'],
     }),
     commonjs(),
-		typescript({
-			// sourceMap: !production,
+    typescript({
+      // sourceMap: !production,
       sourceMap: true,
-			// inlineSources: !production
-      inlineSources: true
-		}),
+      // inlineSources: !production
+      inlineSources: true,
+    }),
     // we'll extract any component CSS out into
     // a separate file - better for performance
     css({ output: `${name}.css` }),
@@ -77,14 +83,11 @@ const genBundleConfig = (name) => ({
 
     // If we're building for production (npm run build
     // instead of npm run dev), minify
-    production && terser()
+    production && terser(),
   ],
   watch: {
-    clearScreen: false
-  }
-})
+    clearScreen: false,
+  },
+});
 
-export default [
-  genBundleConfig("bingo"),
-  genBundleConfig("create"),
-];
+export default [genBundleConfig('bingo'), genBundleConfig('create')];

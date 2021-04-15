@@ -10,7 +10,6 @@
   :global(.img-link) {
     max-height: 1rem;
   }
-
 </style>
 
 <script lang="ts">
@@ -25,7 +24,7 @@
     UncontrolledDropdown,
     DropdownToggle,
     DropdownMenu,
-    DropdownItem
+    DropdownItem,
   } from 'sveltestrap';
   import githubLogo from './icons/GitHub-Mark-32px.png';
 
@@ -40,20 +39,22 @@
 <header>
   <Navbar class="navbar" color="light fixed-top" light expand="md">
     <NavbarBrand href="/">Bingo</NavbarBrand>
-    <NavbarToggler on:click={() => (isOpen = !isOpen)} />
-    <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
+    <NavbarToggler on:click="{() => (isOpen = !isOpen)}" />
+    <Collapse isOpen="{isOpen}" navbar expand="md" on:update="{handleUpdate}">
       <Nav navbar>
         <NavItem>
-            <NavLink href="./" active="{active === 'create'}">Create <span class="sr-only">(current)</span></NavLink>
+          <NavLink href="./" active="{active === 'create'}"
+            >Create <span class="sr-only">(current)</span></NavLink
+          >
         </NavItem>
         <NavItem>
-            <NavLink href="./bingo" active="{active === 'play'}">Play</NavLink>
+          <NavLink href="./bingo" active="{active === 'play'}">Play</NavLink>
         </NavItem>
       </Nav>
       <Nav class="ml-auto" navbar>
         <NavItem>
           <NavLink href="https://github.com/tchamberlin/person-bingo">
-            <img class="img-link" src={githubLogo} alt="GitHub Repo Link"/>
+            <img class="img-link" src="{githubLogo}" alt="GitHub Repo Link" />
           </NavLink>
         </NavItem>
       </Nav>

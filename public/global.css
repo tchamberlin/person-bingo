@@ -1,11 +1,10 @@
 html {
-	position: relative;
-	min-height: 100%;
+  position: relative;
+  min-height: 100%;
 }
 
 body {
-	line-height: 1.25rem;
-	margin-top: 30px;
-	/*margin-bottom: 30px;*/
+  line-height: 1.25rem;
+  margin-top: 30px;
+  /*margin-bottom: 30px;*/
 }
-

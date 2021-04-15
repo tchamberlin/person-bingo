@@ -41,13 +41,12 @@
   .table th {
     padding: 0.5rem;
   }
-
 </style>
 
 <script lang="ts">
   import seedrandom from 'seedrandom';
   import suggestions from './suggested_prompts';
-  import {genRandomString, chunk, shuffle} from './utils.ts';
+  import { genRandomString, chunk, shuffle } from './utils.ts';
   import Nav from './Nav.svelte';
 
   interface Cell {
@@ -78,16 +77,16 @@
     if (prompts.length < 25) {
       const num_prompts_to_fill = 25 - prompts.length;
       console.log(
-        `Got ${prompts.length} from URL params, so adding ${num_prompts_to_fill} ` + 
-        `suggestions to make up the difference`
-      )
-      
+        `Got ${prompts.length} from URL params, so adding ${num_prompts_to_fill} ` +
+          `suggestions to make up the difference`
+      );
+
       // Delete previous board
       localStorage.removeItem('bingo-board');
       prompts = [...prompts, ...shuffle(suggestions, random).slice(0, num_prompts_to_fill)];
-      console.log("shuffle(suggestions, random)", shuffle(suggestions, random))
-      console.log("suggestions", suggestions)
-      console.log("prompts", prompts)
+      console.log('shuffle(suggestions, random)', shuffle(suggestions, random));
+      console.log('suggestions', suggestions);
+      console.log('prompts', prompts);
       console.log(`Loaded ${num_prompts_to_fill} suggestions`, suggestions);
     }
     prompts = shuffle(prompts, random);
@@ -178,17 +177,17 @@
   }
 
   function checkFourCornersWin(board: Board): void {
-    return (
-      board[0][0].state.found &&
+    return board[0][0].state.found &&
       board[0][4].state.found &&
       board[4][0].state.found &&
       board[4][4].state.found
-    ) ? ["0x0", "0x4", "4x0", "4x4"] : [];
+      ? ['0x0', '0x4', '4x0', '4x4']
+      : [];
   }
 
   function checkBlackoutWin(board: Board): void {
     let win = true;
-    console.log("board", board)
+    console.log('board', board);
     board.forEach((row: Array<Cell>) =>
       row.forEach((cell: Cell) => {
         if (!cell.state.found || cell.state.duplicate) {
@@ -198,7 +197,7 @@
       })
     );
 
-    console.log
+    console.log;
     let wonCells = [];
     if (win) {
       board.forEach((row, ri: number) =>
@@ -279,28 +278,28 @@
   const WIN_CONDITION_PARAM_KEY = 'goal';
   const BINGO_LETTERS = 'BINGO';
   const url: URL = new URL(location.href);
-  let WIN_CONDITION = url.searchParams.get(WIN_CONDITION_PARAM_KEY) || "line";
-  console.log("WIN_CONDITION", WIN_CONDITION)
+  let WIN_CONDITION = url.searchParams.get(WIN_CONDITION_PARAM_KEY) || 'line';
+  console.log('WIN_CONDITION', WIN_CONDITION);
 
   const RULES = {
     line: {
-      name: "Standard",
-      blurb: "complete either a horizontal, vertical, OR diagonal line",
+      name: 'Standard',
+      blurb: 'complete either a horizontal, vertical, OR diagonal line',
       function: checkLineWin,
     },
-    "four-corners": {
-      name: "Four Corners",
-      blurb: "complete all four corners of the board",
+    'four-corners': {
+      name: 'Four Corners',
+      blurb: 'complete all four corners of the board',
       function: checkFourCornersWin,
     },
     blackout: {
-      name: "Blackout",
-      blurb: "complete EVERY square on the board",
+      name: 'Blackout',
+      blurb: 'complete EVERY square on the board',
       function: checkBlackoutWin,
-    }
-  }
+    },
+  };
 
-  console.log("url length", url.toString().length)
+  console.log('url length', url.toString().length);
   // If 'clear' is given as a param, regardless of its value, user has requested
   // a board reset
   const resetBoardRequested: boolean = url.searchParams.get('clear') !== null;
@@ -314,18 +313,17 @@
   const boardStr = localStorage.getItem('bingo-board');
   let board: Board;
   if (boardStr == null) {
-    console.log("No saved board in localStorage; creating a new one")
+    console.log('No saved board in localStorage; creating a new one');
     board = genBoard();
   } else {
     board = JSON.parse(boardStr);
-    console.log("Found board in localStorage")
+    console.log('Found board in localStorage');
 
     checkBoard(board);
   }
-  url.searchParams.delete(CELL_PARAM_KEY)
+  url.searchParams.delete(CELL_PARAM_KEY);
   if (window.location.toString() !== url.href) {
-    window.location.assign(url.href)
-
+    window.location.assign(url.href);
   }
 
   let userIsSureTheyWantToSubmit = false;
@@ -333,101 +331,99 @@
   let nav_open = false;
 </script>
 
-<body>
-  <Nav active="play" />
-  <main role="main" class="container">
-    {#if board.length}
-      <div class="d-flex flex-row align-items-center">
-        <div class="p-2">
-          <h1>Bingo</h1>
-        </div>
-        <div class="p-2">
-          <button
-            on:click="{handleClear}"
-            class="btn btn-sm"
-            class:btn-secondary="{!userIsSureTheyWantToClear}"
-            class:btn-danger="{userIsSureTheyWantToClear}"
-            on:blur="{() => {
-              userIsSureTheyWantToClear = false;
-            }}"
-            title="Clear all text inputs from the board (but keep everything else the same)"
-          >
-            {userIsSureTheyWantToClear ? 'Are You Sure?' : 'Clear Board'}
-          </button>
-        </div>
-        <div class="p-2">
-          <button
-            on:click="{handleSubmit}"
-            class="btn btn-sm"
-            class:btn-warning="{!userIsSureTheyWantToSubmit}"
-            class:btn-danger="{userIsSureTheyWantToSubmit}"
-            on:blur="{() => {
-              userIsSureTheyWantToSubmit = false;
-            }}"
-            title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
-          >
-            {userIsSureTheyWantToSubmit
-              ? 'Are You Sure? This will clear all of your inputs and rearrange your board'
-              : 'Shuffle Board'}
-          </button>
-        </div>
+<Nav active="play" />
+<main role="main" class="container">
+  {#if board.length}
+    <div class="d-flex flex-row align-items-center">
+      <div class="p-2">
+        <h1>Bingo</h1>
+      </div>
+      <div class="p-2">
+        <button
+          on:click="{handleClear}"
+          class="btn btn-sm"
+          class:btn-secondary="{!userIsSureTheyWantToClear}"
+          class:btn-danger="{userIsSureTheyWantToClear}"
+          on:blur="{() => {
+            userIsSureTheyWantToClear = false;
+          }}"
+          title="Clear all text inputs from the board (but keep everything else the same)"
+        >
+          {userIsSureTheyWantToClear ? 'Are You Sure?' : 'Clear Board'}
+        </button>
+      </div>
+      <div class="p-2">
+        <button
+          on:click="{handleSubmit}"
+          class="btn btn-sm"
+          class:btn-warning="{!userIsSureTheyWantToSubmit}"
+          class:btn-danger="{userIsSureTheyWantToSubmit}"
+          on:blur="{() => {
+            userIsSureTheyWantToSubmit = false;
+          }}"
+          title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
+        >
+          {userIsSureTheyWantToSubmit
+            ? 'Are You Sure? This will clear all of your inputs and rearrange your board'
+            : 'Shuffle Board'}
+        </button>
+      </div>
 
-        <div class="ml-auto p-2">
-          <span><strong>{RULES[WIN_CONDITION].name}</strong>: {RULES[WIN_CONDITION].blurb}.</span>
-        </div>
-        {#if VICTORY}
+      <div class="ml-auto p-2">
+        <span><strong>{RULES[WIN_CONDITION].name}</strong>: {RULES[WIN_CONDITION].blurb}.</span>
+      </div>
+      {#if VICTORY}
         <div class="p-2">
           <span>YOU'VE WON</span>
         </div>
-        {/if}
-      </div>
-      <table class="table table-bordered">
-        <thead>
-          <th></th>
-          {#each BINGO_LETTERS as letter}
-            <th class="text-center">{letter}</th>
-          {/each}
-        </thead>
-        <tbody>
-          {#each board as row, ri}
-            <tr>
-              <th class="align-middle">{ri + 1}</th>
-              {#each row as cell, ci}
-                <td
-                  class="bingo-cell align-middle {getCellClass(cell)}"
-                  on:click="{() => handleClick(ri, ci)}"
-                >
-                  {#if false}
-                    <code>{JSON.stringify(cell)}</code>
-                  {/if}
-                  <span class="bingo-cell-text">
-                    {cell.title}
-                  </span>
-                  <br />
-                  {#if cell.title !== FREE_SPACE}
-                    <input
-                      on:focus="{() => handleSelectInput(ri, ci)}"
-                      on:blur="{(event) => handleLeaveInput(event, ri, ci)}"
-                      bind:value="{board[ri][ci].value}"
-                      type="text"
-                      id="{ri}x{ci}"
-                      name="{ri}x{ci}"
-                      placeholder="answer"
-                      class="form-control"
-                    />
-                  {/if}
-                </td>
-              {/each}
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {:else}
-      <div>
-        <h1>Bingo</h1>
-        <p>Boards must be at least 25 items! You've probably used an invalid URL.</p>
-        <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
-      </div>
-    {/if}
-  </main>
-</body>
+      {/if}
+    </div>
+    <table class="table table-bordered">
+      <thead>
+        <th></th>
+        {#each BINGO_LETTERS as letter}
+          <th class="text-center">{letter}</th>
+        {/each}
+      </thead>
+      <tbody>
+        {#each board as row, ri}
+          <tr>
+            <th class="align-middle">{ri + 1}</th>
+            {#each row as cell, ci}
+              <td
+                class="bingo-cell align-middle {getCellClass(cell)}"
+                on:click="{() => handleClick(ri, ci)}"
+              >
+                {#if false}
+                  <code>{JSON.stringify(cell)}</code>
+                {/if}
+                <span class="bingo-cell-text">
+                  {cell.title}
+                </span>
+                <br />
+                {#if cell.title !== FREE_SPACE}
+                  <input
+                    on:focus="{() => handleSelectInput(ri, ci)}"
+                    on:blur="{(event) => handleLeaveInput(event, ri, ci)}"
+                    bind:value="{board[ri][ci].value}"
+                    type="text"
+                    id="{ri}x{ci}"
+                    name="{ri}x{ci}"
+                    placeholder="answer"
+                    class="form-control"
+                  />
+                {/if}
+              </td>
+            {/each}
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  {:else}
+    <div>
+      <h1>Bingo</h1>
+      <p>Boards must be at least 25 items! You've probably used an invalid URL.</p>
+      <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
+    </div>
+  {/if}
+</main>
