@@ -45,6 +45,8 @@
 
 <script lang="ts">
   import seedrandom from 'seedrandom';
+  import suggestions from './suggested_prompts';
+  import {genRandomString, chunk, shuffle} from './utils.ts';
 
   interface Cell {
     title: string;
@@ -56,31 +58,8 @@
       duplicate: boolean;
     };
   }
-
-  function genRandomString(length = 8): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let str = '';
-    for (let i = 0; i < length; i++) {
-      str += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    return str;
-  }
-
-  function chunk(arr: Array<any>, len: number): Array<any> {
-    const chunks = [];
-    let i = 0;
-    const n = arr.length;
-    while (i < n) {
-      chunks.push(arr.slice(i, (i += len)));
-    }
-    return chunks;
-  }
-
-  // TODO: fix any. type is prng, but no idea how to specify that here
-  function shuffle(array: Array<any>, random: any): Array<any> {
-    return [...Array(array.length).keys()].sort(() => random.quick() - 0.5);
-  }
+  type Row = Array<Cell>;
+  type Board = Array<Row>;
 
   function genBoard({ resetSeed = false } = {}) {
     let seed: string = localStorage.getItem('bingo-seed');
@@ -93,21 +72,28 @@
     // TODO Make interface
     const random = seedrandom(JSON.stringify(seed));
     const params = new URLSearchParams(location.search);
-    const cells: Array<string> = params.getAll(CELL_PARAM_KEY);
-    if (cells.length < 25) {
-      console.log('bailing out!');
+    let prompts: Array<string> = params.getAll(CELL_PARAM_KEY);
+    if (prompts.length < 25) {
+      const num_prompts_to_fill = 25 - prompts.length;
+      console.log(
+        `Got ${prompts.length} from URL params, so adding ${num_prompts_to_fill} ` + 
+        `suggestions to make up the difference`
+      )
+      
+      // Delete previous board
       localStorage.removeItem('bingo-board');
-      return [];
+      prompts = [...prompts, ...shuffle(suggestions, random).slice(0, num_prompts_to_fill)];
+      console.log("shuffle(suggestions, random)", shuffle(suggestions, random))
+      console.log("suggestions", suggestions)
+      console.log("prompts", prompts)
+      console.log(`Loaded ${num_prompts_to_fill} suggestions`, suggestions);
     }
-    const indices: Array<number> = shuffle(cells, random);
-    const ordered: Array<string> = indices.map((i: number) => cells[i]);
-    const free_i: number = ordered.indexOf(FREE_SPACE);
+    prompts = shuffle(prompts, random);
     const middle_i: number = 12;
     // Swap the free space into the middle
-    ordered[free_i] = ordered[middle_i];
-    ordered[middle_i] = FREE_SPACE;
+    prompts[middle_i] = FREE_SPACE;
     // Generate the cell objects
-    const o2: Array<Cell> = ordered.map((title: string) => ({
+    const cells: Array<Cell> = prompts.map((title: string) => ({
       title: title,
       value: '',
       state: {
@@ -117,7 +103,7 @@
         duplicate: false,
       },
     }));
-    const board: Array<Array<Cell>> = chunk(o2.slice(0, 25), 5);
+    const board: Board = chunk(cells.slice(0, 25), 5);
     // Save the board to localStorage (so it will survive refreshes, etc)
     localStorage.setItem('bingo-board', JSON.stringify(board));
     checkBoard(board);
@@ -151,7 +137,7 @@
     board[col][row].state.active = true;
   }
 
-  function checkRowWin(board: Array<Array<Cell>>): Array<string> {
+  function checkRowWin(board: Board): Array<string> {
     let wonCells = [];
     board.forEach((row: Array<Cell>, ri: number) => {
       if (row.every((cell: Cell) => cell.state.found && !cell.state.duplicate)) {
@@ -161,7 +147,7 @@
     return wonCells;
   }
 
-  function checkColWin(board: Array<Array<Cell>>): Array<string> {
+  function checkColWin(board: Board): Array<string> {
     let wonCells = [];
     // TODO: will break with non-square boards
     [...Array(board.length).keys()].forEach((ci: number) => {
@@ -172,7 +158,7 @@
     return wonCells;
   }
 
-  function checkDiagonalWin(board: Array<Array<Cell>>): Array<string> {
+  function checkDiagonalWin(board: Board): Array<string> {
     let wonCells = [];
     const ix = [...Array(board.length).keys()];
     if (ix.every((i: number) => board[i][i].state.found)) {
@@ -184,7 +170,45 @@
     return wonCells;
   }
 
-  function checkBoard(board: Array<Array<Cell>>): void {
+  function checkLineWin(board: Board) {
+    const wonCells = [...checkRowWin(board), ...checkDiagonalWin(board), ...checkColWin(board)];
+    return wonCells;
+  }
+
+  function checkFourCornersWin(board: Board): void {
+    return (
+      board[0][0].state.found &&
+      board[0][4].state.found &&
+      board[4][0].state.found &&
+      board[4][4].state.found
+    ) ? ["0x0", "0x4", "4x0", "4x4"] : [];
+  }
+
+  function checkBlackoutWin(board: Board): void {
+    let win = true;
+    console.log("board", board)
+    board.forEach((row: Array<Cell>) =>
+      row.forEach((cell: Cell) => {
+        if (!cell.state.found || cell.state.duplicate) {
+          win = false;
+        }
+        // break;
+      })
+    );
+
+    console.log
+    let wonCells = [];
+    if (win) {
+      board.forEach((row, ri: number) =>
+        row.forEach((_, ci: number) => {
+          wonCells.push(`${ri}x${ci}`);
+        })
+      );
+    }
+    return wonCells;
+  }
+
+  function checkBoard(board: Board): void {
     const allValues = [];
     board.forEach((row: Array<Cell>) =>
       row.forEach((cell: Cell) => {
@@ -203,12 +227,15 @@
       })
     );
 
-    const wonCells = [...checkRowWin(board), ...checkDiagonalWin(board), ...checkColWin(board)];
+    const wonCells = RULES[WIN_CONDITION].function(board);
+
     board.forEach((row: Array<Cell>, ri: number) =>
       row.forEach((_, ci: number) => {
         board[ri][ci].state.win = wonCells.indexOf(`${ri}x${ci}`) !== -1;
       })
     );
+
+    VICTORY = Boolean(wonCells.length);
   }
 
   function handleLeaveInput(event: FocusEvent, row: number, col: number): void {
@@ -244,33 +271,59 @@
     }
   }
 
-  const FREE_SPACE: string = 'Free Space';
-  const CELL_PARAM_KEY: string = 'c';
-  const BINGO_LETTERS: string = 'BINGO';
+  let VICTORY = false;
+  const FREE_SPACE = 'Free Space';
+  const CELL_PARAM_KEY = 'c';
+  const WIN_CONDITION_PARAM_KEY = 'goal';
+  const BINGO_LETTERS = 'BINGO';
   const url: URL = new URL(location.href);
+  let WIN_CONDITION = url.searchParams.get(WIN_CONDITION_PARAM_KEY) || "line";
+  console.log("WIN_CONDITION", WIN_CONDITION)
+
+  const RULES = {
+    line: {
+      name: "Standard",
+      blurb: "complete either a horizontal, vertical, OR diagonal line",
+      function: checkLineWin,
+    },
+    "four-corners": {
+      name: "Four Corners",
+      blurb: "complete all four corners of the board",
+      function: checkFourCornersWin,
+    },
+    blackout: {
+      name: "Blackout",
+      blurb: "complete EVERY square on the board",
+      function: checkBlackoutWin,
+    }
+  }
+
+  console.log("url length", url.toString().length)
   // If 'clear' is given as a param, regardless of its value, user has requested
   // a board reset
   const resetBoardRequested: boolean = url.searchParams.get('clear') !== null;
+  if (resetBoardRequested) {
+    console.log('Cleared board due to clear= URL param');
+    url.searchParams.delete('clear');
+    localStorage.removeItem('bingo-board');
+    window.location.assign(url.toString());
+  }
 
   const boardStr = localStorage.getItem('bingo-board');
-  let board: Array<Array<Cell>>;
-  if (boardStr == null || resetBoardRequested) {
+  let board: Board;
+  if (boardStr == null) {
+    console.log("No saved board in localStorage; creating a new one")
     board = genBoard();
-    if (resetBoardRequested) {
-      url.searchParams.delete('clear');
-      console.log('Cleared board due to clear= URL param');
-      window.location.assign(url.toString());
-    }
   } else {
     board = JSON.parse(boardStr);
-    if (url.searchParams.get('c') == null) {
-      board.forEach((row: Array<Cell>) =>
-        row.forEach((cell: Cell) => url.searchParams.append('c', cell.title))
-      );
-      window.location.assign(url.toString());
-    }
+    console.log("Found board in localStorage")
 
     checkBoard(board);
+  }
+  // url.searchParams.delete(CELL_PARAM_KEY)
+  if (window.location.toString() !== url.href) {
+    window.location.assign(url.href)
+
   }
 
   let userIsSureTheyWantToSubmit = false;
@@ -313,18 +366,19 @@
             : 'Shuffle Board'}
         </button>
       </div>
-      <div class="p-2">
-        <a
-          class="btn btn-info"
-          href="./index.html"
-          id="create-bingo-board"
-          title="Enter new words to create a new board"
-        >
-          Create New Board
-        </a>
-      </div>
     </div>
-
+    <div class="d-flex flex-row align-items-center">
+      <div class="p-2">
+        <p>
+          <strong>{RULES[WIN_CONDITION].name}</strong>: {RULES[WIN_CONDITION].blurb}.
+        </p>
+      </div>
+      {#if VICTORY}
+      <div class="p-2">
+        <p>YOU'VE WON</p>
+      </div>
+      {/if}
+    </div>
     <table class="table table-bordered">
       <thead>
         <th></th>

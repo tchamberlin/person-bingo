@@ -10,6 +10,10 @@
 </style>
 
 <script lang="ts">
+  import seedrandom from 'seedrandom';
+  import suggestions from './suggested_prompts';
+  import {shuffle, genRandomString} from './utils';
+
   function handleCopyToClipboard(): void {
     const phrasesText = document.getElementById('go-to-bingo-board') as HTMLAnchorElement;
     const promise = navigator.clipboard.writeText(phrasesText.href);
@@ -28,6 +32,7 @@
       }
     });
     searchParams.append('clear', '');
+    searchParams.append('goal', win_condition);
     BINGO_URL = './bingo.html?' + searchParams.toString();
   }
 
@@ -42,6 +47,23 @@
     genBingoUrl();
   }
 
+  function loadSuggestedPrompts(): void {
+    let seed: string = localStorage.getItem('bingo-seed');
+    console.log(`Got seed ${seed}`);
+    if (seed == null) {
+      seed = genRandomString();
+      console.log(`Set seed to ${seed}`);
+      localStorage.setItem('bingo-seed', seed);
+    }
+    // TODO Make interface
+    const random = seedrandom(JSON.stringify(seed));
+    console.log("PHRASES_LEFT", PHRASES_LEFT)
+    console.log("NUM_PHRASES", NUM_PHRASES)
+    console.log("shuffle(suggestions, random)", shuffle(suggestions, random))
+    PHRASES_STR += shuffle(suggestions, random).slice(0, PHRASES_LEFT).join("\n")
+    handlePhrasesChange()
+  }
+
   let PHRASES_STR: string = '';
   let EXPECTED_PHRASES: number = 25;
   let NUM_PHRASES: number = 0;
@@ -51,6 +73,8 @@
   }
   let IS_VALID: Boolean = false;
   let BINGO_URL: string = '';
+
+  let win_condition = "line";
 </script>
 
 <div class="container">
@@ -58,12 +82,23 @@
     <div class="p-2">
       <h1>Create Bingo</h1>
     </div>
+    <div class="p-2">
+      <button on:click="{loadSuggestedPrompts}">Fill Suggested Prompts</button>
+    </div>
   </div>
   <p>
     Let's make a bingo board! All you need to do is enter <strong>at least</strong> 25 lines of text.
     Once you're done, you'll get a link to your board.
   </p>
+
   <form on:submit|preventDefault="{null}" id="wordsform" class="form">
+    <label for="win-conditions">Win Condition</label>
+    <select name="win-conditions" id="win-conditions" bind:value={win_condition}>
+       <option value="line">Line (horizontal, vertical, diagonal)</option>
+       <option value="four-corners">Four Corners</option>
+       <option value="blackout">Blackout</option>
+    </select>
+
     <textarea
       name="phrases"
       form="wordsform"
