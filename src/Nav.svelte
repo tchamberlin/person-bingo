@@ -48,7 +48,7 @@
           >
         </NavItem>
         <NavItem>
-          <NavLink href="./bingo" active="{active === 'play'}">Play</NavLink>
+          <NavLink href="./bingo.html" active="{active === 'play'}">Play</NavLink>
         </NavItem>
       </Nav>
       <Nav class="ml-auto" navbar>
