@@ -24,6 +24,20 @@
     );
   }
 
+  function handleShorten(): void {
+    const urlToShorten = new URL(BINGO_URL, window.location.href).toString();
+    fetch(`https://url.pizza/shorten/${urlToShorten}`)
+      .then((response) => response.text())
+      .then((url) => {
+        SHORTENED_URL = url;
+        const promise = navigator.clipboard.writeText(url);
+        promise.then(
+          () => console.log('Copied ', url, ' to clipboard'),
+          () => console.log('Failed to copy ', url, ' to clipboard')
+        );
+      });
+  }
+
   function genBingoUrl(): void {
     const searchParams = new URLSearchParams();
     PHRASES_STR.split('\n').forEach((phrase) => {
@@ -50,16 +64,14 @@
 
   function loadSuggestedPrompts(): void {
     let seed: string = localStorage.getItem('bingo-seed');
-    console.log(`Got seed ${seed}`);
+    console.log(`Got seed from localStorage: ${seed}`);
     if (seed == null) {
       seed = genRandomString();
-      console.log(`Set seed to ${seed}`);
+      console.log(`Set seed in localStorage to ${seed}`);
       localStorage.setItem('bingo-seed', seed);
     }
     // TODO: Make interface
     const random = seedrandom(JSON.stringify(seed));
-    console.log('PHRASES_LEFT', PHRASES_LEFT);
-    console.log('NUM_PHRASES', NUM_PHRASES);
     if (PHRASES_STR.trim().length) {
       PHRASES_STR = [PHRASES_STR, ...shuffle(suggestions, random).slice(0, PHRASES_LEFT)].join(
         '\n'
@@ -79,6 +91,7 @@
   }
   let IS_VALID: Boolean = false;
   let BINGO_URL: string = '';
+  let SHORTENED_URL: string = '';
 
   let win_condition = 'line';
 </script>
@@ -125,6 +138,9 @@
         <button class="btn btn-info" on:click="{handleCopyToClipboard}">
           📋 Copy link to clipboard 📋
         </button>
+        <button class="btn btn-info" on:click="{handleShorten}"
+          >📋 Copy shortened link to clipboard 📋</button
+        >
       {:else}
         <div class="d-flex flex-row align-items-center">
           <div class="p-2">
