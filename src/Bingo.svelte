@@ -460,7 +460,7 @@
     </ModalFooter>
   </Modal>
 
-  <Modal isOpen="{RULES_MODAL_OPEN}" toggle_win_modal="{toggle_rules_modal}">
+  <Modal isOpen="{RULES_MODAL_OPEN}" toggle="{toggle_rules_modal}">
     <ModalHeader toggle="{toggle_rules_modal}">📜 Rules</ModalHeader>
     <ModalBody>
       <p>
