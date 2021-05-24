@@ -73,17 +73,11 @@
     // TODO Make interface
     const random = seedrandom(JSON.stringify(seed));
     const params = new URLSearchParams(location.search);
-    let prompts: Array<string> = params.getAll(CELL_PARAM_KEY);
+    let prompts: Set<string> = [...new Set(params.getAll(CELL_PARAM_KEY))];
     if (prompts.length < 25) {
-      const num_prompts_to_fill = 25 - prompts.length;
-      console.log(
-        `Got ${prompts.length} from URL params, so adding ${num_prompts_to_fill} ` +
-          `suggestions to make up the difference`
-      );
-
-      // Delete previous board
-      localStorage.removeItem('bingo-board');
-      prompts = [...prompts, ...shuffle(suggestions, random).slice(0, num_prompts_to_fill)];
+      console.error('Not enough prompts!');
+      // TODO: error message
+      return [];
     }
     prompts = shuffle(prompts, random);
     const middle_i: number = 12;
@@ -105,6 +99,46 @@
     localStorage.setItem('bingo-board', JSON.stringify(board));
     checkBoard(board);
     return board;
+  }
+
+  function shuffleBoard() {
+    // Must reset the seed in order to get a different shuffle than before
+    const seed = genRandomString();
+    console.log(`Set seed to ${seed}`);
+    localStorage.setItem('bingo-seed', seed);
+    const random = seedrandom(JSON.stringify(seed));
+
+    // Now grab the board out of local storage...
+    let prompts: Array<string> = [];
+    const previousBoard: Board = JSON.parse(localStorage.getItem('bingo-board'));
+    previousBoard.forEach((row: Array<Cell>) => {
+      row.forEach((cell: Cell) => {
+        // Grab titles of all cells except he free space
+        if (cell.title !== FREE_SPACE) {
+          prompts.push(cell.title);
+        }
+      });
+    });
+    // ...shuffle it...
+    prompts = shuffle(prompts, random);
+    const middle_i: number = 12;
+    // Swap the free space into the middle
+    prompts[middle_i] = FREE_SPACE;
+    // Generate the cell objects
+    const cells: Array<Cell> = prompts.map((title: string) => ({
+      title: title,
+      value: '',
+      state: {
+        found: title === FREE_SPACE,
+        active: false,
+        win: false,
+        duplicate: false,
+      },
+    }));
+    const newBoard: Board = chunk(cells.slice(0, 25), 5);
+    // ...and put it back
+    localStorage.setItem('bingo-board', JSON.stringify(newBoard));
+    return newBoard;
   }
 
   function getCellClass(cell: Cell): string {
@@ -243,14 +277,9 @@
     checkBoard(board);
   }
 
-  function handleNewSeed(): void {
-    // global
-    board = genBoard({ resetSeed: true });
-  }
-
-  function handleSubmit(): void {
+  function handleShuffle(): void {
     if (userIsSureTheyWantToSubmit) {
-      handleNewSeed();
+      board = shuffleBoard();
       userIsSureTheyWantToSubmit = false;
     } else {
       userIsSureTheyWantToSubmit = true;
@@ -321,6 +350,7 @@
   let userIsSureTheyWantToSubmit = false;
   let userIsSureTheyWantToClear = false;
   let nav_open = false;
+  console.log('here');
 </script>
 
 <Nav active="play" />
@@ -346,7 +376,7 @@
       </div>
       <div class="p-2">
         <button
-          on:click="{handleSubmit}"
+          on:click="{handleShuffle}"
           class="btn btn-sm"
           class:btn-warning="{!userIsSureTheyWantToSubmit}"
           class:btn-danger="{userIsSureTheyWantToSubmit}"
@@ -414,7 +444,10 @@
   {:else}
     <div>
       <h1>Bingo</h1>
-      <p>Boards must be at least 25 items! You've probably used an invalid URL.</p>
+      <p>
+        Boards must be at least 25 <b>unique</b> prompts (got only {board.length})! You've probably
+        used an invalid URL.
+      </p>
       <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
     </div>
   {/if}

@@ -53,29 +53,27 @@
 
   function handlePhrasesChange(): void {
     const phrases_array = PHRASES_STR.split('\n').filter((phrase) => phrase.trim() !== '');
-    NUM_PHRASES = phrases_array.length;
+    const unique_phrases = [...new Set(phrases_array)];
+    // Set UNIQUE_ERROR state depending on whether we find duplicates or not
+    UNIQUE_ERROR = phrases_array.length !== unique_phrases.length;
+    NUM_PHRASES = unique_phrases.length;
     PHRASES_LEFT = EXPECTED_PHRASES - NUM_PHRASES;
     if (PHRASES_LEFT < 0) {
       PHRASES_LEFT = 0;
     }
-    IS_VALID = NUM_PHRASES >= EXPECTED_PHRASES;
+    IS_VALID = NUM_PHRASES >= EXPECTED_PHRASES && !UNIQUE_ERROR;
     genBingoUrl();
   }
 
   function loadSuggestedPrompts(): void {
-    let seed: string = localStorage.getItem('bingo-seed');
-    console.log(`Got seed from localStorage: ${seed}`);
-    if (seed == null) {
-      seed = genRandomString();
-      console.log(`Set seed in localStorage to ${seed}`);
-      localStorage.setItem('bingo-seed', seed);
-    }
-    // TODO: Make interface
-    const random = seedrandom(JSON.stringify(seed));
+    const random = seedrandom();
+    const phrases = PHRASES_STR.split('\n').map((phrase) => phrase.trim());
+    // Make sure we don't suggest something that's already being used!
+    const unused_suggestions = shuffle(suggestions, random).filter(
+      (phrase) => !phrases.includes(phrase)
+    );
     if (PHRASES_STR.trim().length) {
-      PHRASES_STR = [PHRASES_STR, ...shuffle(suggestions, random).slice(0, PHRASES_LEFT)].join(
-        '\n'
-      );
+      PHRASES_STR = [...phrases, ...unused_suggestions.slice(0, PHRASES_LEFT)].join('\n');
     } else {
       PHRASES_STR = shuffle(suggestions, random).slice(0, PHRASES_LEFT).join('\n');
     }
@@ -92,6 +90,7 @@
   let IS_VALID: Boolean = false;
   let BINGO_URL: string = '';
   let SHORTENED_URL: string = '';
+  let UNIQUE_ERROR = false;
 
   let win_condition = 'line';
 </script>
@@ -129,7 +128,11 @@
         on:input="{handlePhrasesChange}"
         placeholder="Enter phrases, one per line"
         class="form-control"
+        class:is-invalid="{UNIQUE_ERROR}"
         id="phrases-text"></textarea>
+      {#if UNIQUE_ERROR}
+        <small id="phrases-help" class="text-danger"> All lines must be unique! </small>
+      {/if}
     </div>
     <br />
     <div>
