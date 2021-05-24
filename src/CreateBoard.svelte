@@ -82,7 +82,7 @@
 
   const FREE_SPACE = 'Free Space';
   let PHRASES_STR: string = '';
-  let EXPECTED_PHRASES: number = 25;
+  let EXPECTED_PHRASES: number = 24;
   let NUM_PHRASES: number = 0;
   let PHRASES_LEFT: number = EXPECTED_PHRASES - NUM_PHRASES;
   if (PHRASES_LEFT < 0) {
@@ -95,18 +95,9 @@
 
   let win_condition = 'line';
 
-  const board: Board = JSON.parse(localStorage.getItem('bingo-board'));
-  let phrases_array = [];
-  if (board) {
-    board.forEach((row: Array<Cell>) => {
-      row.forEach((cell: Cell) => {
-        // Grab titles of all cells except he free space
-        if (cell.title !== FREE_SPACE) {
-          phrases_array.push(cell.title);
-        }
-      });
-    });
-    PHRASES_STR = phrases_array.join('\n');
+  const prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-prompts')) || [];
+  if (prompts.length > 0) {
+    PHRASES_STR = prompts.filter((phrase) => phrase !== FREE_SPACE).join('\n');
     handlePhrasesChange();
   }
 </script>
@@ -115,8 +106,8 @@
 <main role="main" class="container">
   <h1>Create Bingo</h1>
   <p>
-    Let's make a bingo board! All you need to do is enter <strong>at least</strong> 25 lines of text.
-    Once you're done, you'll get a link to your board.
+    Let's make a bingo board! All you need to do is enter <strong>at least</strong>
+    {EXPECTED_PHRASES} lines of text. Once you're done, you'll get a link to your board.
   </p>
 
   <form on:submit|preventDefault="{() => null}" id="wordsform" class="form">

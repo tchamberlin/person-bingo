@@ -31,6 +31,9 @@
     color: black;
     cursor: default;
   }
+  .free-space {
+    cursor: default;
+  }
   td:nth-child(even) {
     background-color: #f2f2f2;
   }
@@ -40,6 +43,11 @@
   .table td,
   .table th {
     padding: 0.5rem;
+  }
+  @media (max-width: 1025px) {
+    .container {
+      max-width: 95% !important;
+    }
   }
 </style>
 
@@ -72,19 +80,18 @@
       console.log(`Set seed to ${seed}`);
       localStorage.setItem('bingo-seed', seed);
     }
-    // TODO Make interface
-    const random = seedrandom(JSON.stringify(seed));
-    const params = new URLSearchParams(location.search);
-    let prompts: Set<string> = [...new Set(params.getAll(CELL_PARAM_KEY))];
-    if (prompts.length < 25) {
-      console.error('Not enough prompts!');
-      // TODO: error message
+
+    let prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-prompts')) || [];
+    console.log(`Got prompts`, prompts);
+    if (prompts.length === 0) {
       return [];
     }
+
+    // TODO Make interface
+    const random = seedrandom(JSON.stringify(seed));
     prompts = shuffle(prompts, random);
-    const middle_i: number = 12;
-    // Swap the free space into the middle
-    prompts[middle_i] = FREE_SPACE;
+    // Put the free space in the middle square
+    prompts = [...prompts.slice(0, 12), FREE_SPACE, ...prompts.slice(12)];
     // Generate the cell objects
     const cells: Array<Cell> = prompts.map((title: string) => ({
       title: title,
@@ -103,58 +110,25 @@
     return board;
   }
 
-  function shuffleBoard() {
-    // Must reset the seed in order to get a different shuffle than before
-    const seed = genRandomString();
-    console.log(`Set seed to ${seed}`);
-    localStorage.setItem('bingo-seed', seed);
-    const random = seedrandom(JSON.stringify(seed));
-
-    // Now grab the board out of local storage...
-    let prompts: Array<string> = [];
-    const previousBoard: Board = JSON.parse(localStorage.getItem('bingo-board'));
-    previousBoard.forEach((row: Array<Cell>) => {
-      row.forEach((cell: Cell) => {
-        // Grab titles of all cells except he free space
-        if (cell.title !== FREE_SPACE) {
-          prompts.push(cell.title);
-        }
-      });
-    });
-    // ...shuffle it...
-    prompts = shuffle(prompts, random);
-    const middle_i: number = 12;
-    // Swap the free space into the middle
-    prompts[middle_i] = FREE_SPACE;
-    // Generate the cell objects
-    const cells: Array<Cell> = prompts.map((title: string) => ({
-      title: title,
-      value: '',
-      state: {
-        found: title === FREE_SPACE,
-        active: false,
-        win: false,
-        duplicate: false,
-      },
-    }));
-    const newBoard: Board = chunk(cells.slice(0, 25), 5);
-    // ...and put it back
-    localStorage.setItem('bingo-board', JSON.stringify(newBoard));
-    return newBoard;
-  }
-
   function getCellClass(cell: Cell): string {
+    let cssClass = null;
     if (cell.state.active) {
-      return 'active';
+      cssClass = 'active';
     } else if (cell.state.duplicate) {
-      return 'duplicate';
+      cssClass = 'duplicate';
     } else if (cell.state.win) {
-      return 'win';
+      cssClass = 'win';
     } else if (cell.state.found) {
-      return 'found';
+      cssClass = 'found';
     } else {
-      return 'not_found';
+      cssClass = 'not_found';
     }
+
+    if (cell.title == FREE_SPACE) {
+      cssClass += ' free-space';
+    }
+
+    return cssClass;
   }
 
   function handleClick(col: number, row: number): void {
@@ -284,7 +258,7 @@
 
   function handleShuffle(): void {
     if (userIsSureTheyWantToSubmit) {
-      board = shuffleBoard();
+      board = genBoard({ resetSeed: true });
       userIsSureTheyWantToSubmit = false;
     } else {
       userIsSureTheyWantToSubmit = true;
@@ -301,7 +275,9 @@
   }
 
   let WIN_MODAL_OPEN = false;
+  let RULES_MODAL_OPEN = false;
   const toggle_win_modal = () => (WIN_MODAL_OPEN = !WIN_MODAL_OPEN);
+  const toggle_rules_modal = () => (RULES_MODAL_OPEN = !RULES_MODAL_OPEN);
   let VICTORY = false;
   const FREE_SPACE = 'Free Space';
   const CELL_PARAM_KEY = 'c';
@@ -313,7 +289,7 @@
   const RULES = {
     line: {
       name: 'Standard',
-      blurb: 'complete either a horizontal, vertical, OR diagonal line',
+      blurb: 'complete a horizontal, vertical, OR diagonal line',
       function: checkLineWin,
     },
     'four-corners': {
@@ -342,6 +318,10 @@
   let board: Board;
   if (boardStr == null) {
     console.log('No saved board in localStorage; creating a new one');
+    const params = new URLSearchParams(location.search);
+    // Get unique prompts from query params
+    let prompts: Array<string> = [...new Set(params.getAll(CELL_PARAM_KEY))];
+    localStorage.setItem('bingo-prompts', JSON.stringify(prompts));
     board = genBoard();
   } else {
     board = JSON.parse(boardStr);
@@ -362,46 +342,59 @@
 <Nav active="play" />
 <main role="main" class="container">
   {#if board.length}
-    <div class="d-flex flex-row align-items-center">
-      <div class="p-2">
-        <h1>Bingo</h1>
-      </div>
-      <div class="p-2">
-        <button
-          on:click="{handleClear}"
-          class="btn btn-sm"
-          class:btn-secondary="{!userIsSureTheyWantToClear}"
-          class:btn-danger="{userIsSureTheyWantToClear}"
-          on:blur="{() => {
-            userIsSureTheyWantToClear = false;
-          }}"
-          title="Clear all text inputs from the board (but keep everything else the same)"
-        >
-          {userIsSureTheyWantToClear ? 'Are You Sure?' : 'Clear Board'}
-        </button>
-      </div>
-      <div class="p-2">
-        <button
-          on:click="{handleShuffle}"
-          class="btn btn-sm"
-          class:btn-warning="{!userIsSureTheyWantToSubmit}"
-          class:btn-danger="{userIsSureTheyWantToSubmit}"
-          on:blur="{() => {
-            userIsSureTheyWantToSubmit = false;
-          }}"
-          title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
-        >
-          {userIsSureTheyWantToSubmit
-            ? 'Are You Sure? This will clear all of your inputs and rearrange your board'
-            : 'Shuffle Board'}
-        </button>
-      </div>
-
-      <div class="ml-auto p-2">
-        <span
-          ><strong>Win Condition:</strong>
-          {RULES[WIN_CONDITION].name} ({RULES[WIN_CONDITION].blurb})</span
-        >
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        <div class="col-xs-6">
+          <div class="d-flex flex-row align-items-center">
+            <div class="pr-2">
+              <button
+                on:click="{handleClear}"
+                class="btn btn-sm"
+                class:btn-secondary="{!userIsSureTheyWantToClear}"
+                class:btn-danger="{userIsSureTheyWantToClear}"
+                on:blur="{() => {
+                  userIsSureTheyWantToClear = false;
+                }}"
+                title="Clear all text inputs from the board (but keep everything else the same)"
+              >
+                {userIsSureTheyWantToClear ? '❌ Are You Sure?' : '❌ Clear Board'}
+              </button>
+            </div>
+            <div class="p-2">
+              <button
+                on:click="{handleShuffle}"
+                class="btn btn-sm"
+                class:btn-warning="{!userIsSureTheyWantToSubmit}"
+                class:btn-danger="{userIsSureTheyWantToSubmit}"
+                on:blur="{() => {
+                  userIsSureTheyWantToSubmit = false;
+                }}"
+                title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
+              >
+                {userIsSureTheyWantToSubmit ? '🔀 Are You Sure?' : '🔀 Clear & Shuffle Board'}
+              </button>
+            </div>
+            <div class="p-2">
+              <button
+                on:click="{toggle_rules_modal}"
+                class="btn btn-info btn-sm"
+                title="What is this thing?"
+              >
+                📜 Rules
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-6 ml-auto text-right">
+          <div>
+            <small
+              >Find people that match the prompt in each cell. A name can be used only once</small
+            >
+          </div>
+          <div>
+            <small>After you <strong>{RULES[WIN_CONDITION].blurb}</strong>, you win!</small>
+          </div>
+        </div>
       </div>
     </div>
     <table class="table table-bordered">
@@ -449,21 +442,49 @@
     <div>
       <h1>Bingo</h1>
       <p>
-        Boards must be at least 25 <b>unique</b> prompts (got only {board.length})! You've probably
-        used an invalid URL.
+        Boards must be at least 25 <strong>unique</strong> prompts (got only {board.length})! You've
+        probably used an invalid URL.
       </p>
       <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
     </div>
   {/if}
 
-  <Modal isOpen="{WIN_MODAL_OPEN}" toggle_win_modal="{toggle_win_modal}">
-    <ModalHeader toggle_win_modal="{toggle_win_modal}">You've Won</ModalHeader>
+  <Modal isOpen="{WIN_MODAL_OPEN}" toggle="{toggle_win_modal}">
+    <ModalHeader toggle="{toggle_win_modal}">🙌 You've Won</ModalHeader>
     <ModalBody>
       <p>That's right, you're a winner!</p>
       <p>Even if you've accomplished nothing else today... you have this</p>
     </ModalBody>
     <ModalFooter>
-      <Button color="primary" on:click="{toggle_win_modal}">I AM PLEASED</Button>
+      <Button color="primary" on:click="{toggle_win_modal}">I'm a winner 😌</Button>
+    </ModalFooter>
+  </Modal>
+
+  <Modal isOpen="{RULES_MODAL_OPEN}" toggle_win_modal="{toggle_rules_modal}">
+    <ModalHeader toggle="{toggle_rules_modal}">📜 Rules</ModalHeader>
+    <ModalBody>
+      <p>
+        This is "person Bingo". It's a super cool way to get to know whoever else you've been
+        convinced to play with.
+      </p>
+      <p>
+        Unlike normal Bingo, in order <strong
+          >to "mark" a cell, you will need to find a person that matches the prompt inside of it</strong
+        >. For example, if B1 says "owns a motorcycle", then you would need to find someone who owns
+        a motorcycle, then put there name into the text box in B1.
+      </p>
+      <p>
+        In order to win, you will need to meet the <strong>Win Condition</strong> displayed to the
+        top right of the board. In "standard" mode, for example, you could win if fill in B1 through
+        B5 with 5 <strong>different</strong> names!
+      </p>
+      <p>
+        A final note: <strong>nothing</strong> that you put into this website will leave your computer!
+        All of the information is stored locally, and no one else has any way of seeing it.
+      </p>
+    </ModalBody>
+    <ModalFooter>
+      <Button color="primary" on:click="{toggle_rules_modal}">Okay</Button>
     </ModalFooter>
   </Modal>
 </main>
