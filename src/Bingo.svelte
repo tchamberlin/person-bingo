@@ -45,6 +45,8 @@
 
 <script lang="ts">
   import seedrandom from 'seedrandom';
+  import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from 'sveltestrap';
+
   import suggestions from './suggested_prompts';
   import { genRandomString, chunk, shuffle } from './utils.ts';
   import Nav from './Nav.svelte';
@@ -265,6 +267,9 @@
     );
 
     VICTORY = Boolean(wonCells.length);
+    if (VICTORY) {
+      toggle_win_modal();
+    }
   }
 
   function handleLeaveInput(event: FocusEvent, row: number, col: number): void {
@@ -295,6 +300,8 @@
     }
   }
 
+  let WIN_MODAL_OPEN = false;
+  const toggle_win_modal = () => (WIN_MODAL_OPEN = !WIN_MODAL_OPEN);
   let VICTORY = false;
   const FREE_SPACE = 'Free Space';
   const CELL_PARAM_KEY = 'c';
@@ -350,7 +357,6 @@
   let userIsSureTheyWantToSubmit = false;
   let userIsSureTheyWantToClear = false;
   let nav_open = false;
-  console.log('here');
 </script>
 
 <Nav active="play" />
@@ -392,13 +398,11 @@
       </div>
 
       <div class="ml-auto p-2">
-        <span><strong>{RULES[WIN_CONDITION].name}</strong>: {RULES[WIN_CONDITION].blurb}.</span>
+        <span
+          ><strong>Win Condition:</strong>
+          {RULES[WIN_CONDITION].name} ({RULES[WIN_CONDITION].blurb})</span
+        >
       </div>
-      {#if VICTORY}
-        <div class="p-2">
-          <span>YOU'VE WON</span>
-        </div>
-      {/if}
     </div>
     <table class="table table-bordered">
       <thead>
@@ -451,4 +455,15 @@
       <p>Navigate <a href="./index.html">here</a> to create a new one!</p>
     </div>
   {/if}
+
+  <Modal isOpen="{WIN_MODAL_OPEN}" toggle_win_modal="{toggle_win_modal}">
+    <ModalHeader toggle_win_modal="{toggle_win_modal}">You've Won</ModalHeader>
+    <ModalBody>
+      <p>That's right, you're a winner!</p>
+      <p>Even if you've accomplished nothing else today... you have this</p>
+    </ModalBody>
+    <ModalFooter>
+      <Button color="primary" on:click="{toggle_win_modal}">I AM PLEASED</Button>
+    </ModalFooter>
+  </Modal>
 </main>
