@@ -80,6 +80,7 @@
     handlePhrasesChange();
   }
 
+  const FREE_SPACE = 'Free Space';
   let PHRASES_STR: string = '';
   let EXPECTED_PHRASES: number = 25;
   let NUM_PHRASES: number = 0;
@@ -93,6 +94,21 @@
   let UNIQUE_ERROR = false;
 
   let win_condition = 'line';
+
+  const board: Board = JSON.parse(localStorage.getItem('bingo-board'));
+  let phrases_array = [];
+  if (board) {
+    board.forEach((row: Array<Cell>) => {
+      row.forEach((cell: Cell) => {
+        // Grab titles of all cells except he free space
+        if (cell.title !== FREE_SPACE) {
+          phrases_array.push(cell.title);
+        }
+      });
+    });
+    PHRASES_STR = phrases_array.join('\n');
+    handlePhrasesChange();
+  }
 </script>
 
 <Nav active="create" />
