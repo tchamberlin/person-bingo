@@ -215,7 +215,7 @@
       : [];
   }
 
-  function checkBlackoutWin(board: Board): void {
+  function checkWholeBoardWin(board: Board): void {
     let win = true;
     board.forEach((row: Array<Cell>) =>
       row.forEach((cell: Cell) => {
@@ -314,10 +314,10 @@
       blurb: 'complete all four corners of the board',
       function: checkFourCornersWin,
     },
-    blackout: {
-      name: 'Blackout',
+    'whole-board': {
+      name: 'Whole Board',
       blurb: 'complete EVERY square on the board',
-      function: checkBlackoutWin,
+      function: checkWholeBoardWin,
     },
   };
 

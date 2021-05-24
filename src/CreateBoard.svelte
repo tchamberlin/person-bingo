@@ -113,9 +113,9 @@
         bind:value="{win_condition}"
         on:change="{() => genBingoUrl()}"
       >
-        <option value="line">Line (horizontal, vertical, diagonal)</option>
+        <option value="line">Line (horizontal, vertical, OR diagonal)</option>
         <option value="four-corners">Four Corners</option>
-        <option value="blackout">Blackout</option>
+        <option value="whole-board">Whole Board</option>
       </select>
     </div>
 
