@@ -282,9 +282,12 @@
   const FREE_SPACE = 'Free Space';
   const CELL_PARAM_KEY = 'c';
   const WIN_CONDITION_PARAM_KEY = 'goal';
+  const SEED_PARAM_KEY = 'seed';
   const BINGO_LETTERS = 'BINGO';
   const url: URL = new URL(location.href);
   let WIN_CONDITION = url.searchParams.get(WIN_CONDITION_PARAM_KEY) || 'line';
+  let SEED = url.searchParams.get(SEED_PARAM_KEY) || null;
+  let ALLOW_SHUFFLE = !Boolean(SEED);
 
   const RULES = {
     line: {
@@ -303,6 +306,12 @@
       function: checkWholeBoardWin,
     },
   };
+
+  if (SEED !== null) {
+    localStorage.setItem(`bingo-seed`, JSON.stringify(SEED));
+    console.log('Got seed', SEED, 'from params; saved to localStorage');
+    genBoard();
+  }
 
   // If 'clear' is given as a param, regardless of its value, user has requested
   // a board reset
@@ -339,7 +348,7 @@
   let nav_open = false;
 </script>
 
-<Nav active="play" />
+<Nav active="play" seed="{SEED}" />
 <main role="main" class="container">
   {#if board.length}
     <div class="container-fluid">
@@ -360,20 +369,22 @@
                 {userIsSureTheyWantToClear ? '❌ Are You Sure?' : '❌ Clear Board'}
               </button>
             </div>
-            <div class="p-2">
-              <button
-                on:click="{handleShuffle}"
-                class="btn btn-sm"
-                class:btn-warning="{!userIsSureTheyWantToSubmit}"
-                class:btn-danger="{userIsSureTheyWantToSubmit}"
-                on:blur="{() => {
-                  userIsSureTheyWantToSubmit = false;
-                }}"
-                title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
-              >
-                {userIsSureTheyWantToSubmit ? '🔀 Are You Sure?' : '🔀 Clear & Shuffle Board'}
-              </button>
-            </div>
+            {#if ALLOW_SHUFFLE}
+              <div class="p-2">
+                <button
+                  on:click="{handleShuffle}"
+                  class="btn btn-sm"
+                  class:btn-warning="{!userIsSureTheyWantToSubmit}"
+                  class:btn-danger="{userIsSureTheyWantToSubmit}"
+                  on:blur="{() => {
+                    userIsSureTheyWantToSubmit = false;
+                  }}"
+                  title="Shuffle locations of board spaces, but use the same words. Also clears all text inputs."
+                >
+                  {userIsSureTheyWantToSubmit ? '🔀 Are You Sure?' : '🔀 Clear & Shuffle Board'}
+                </button>
+              </div>
+            {/if}
             <div class="p-2">
               <button
                 on:click="{toggle_rules_modal}"

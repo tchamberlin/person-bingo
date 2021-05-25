@@ -48,7 +48,27 @@
     });
     searchParams.append('clear', '');
     searchParams.append('goal', win_condition);
+    console.log('add seed?');
+    if (SEED_INPUT.length) {
+      const seed = `${SEED_INPUT.replaceAll(/\s+/g, '_')}-${genRandomString()}`;
+      console.log('add seed', seed);
+      searchParams.append('seed', seed);
+    }
     BINGO_URL = './bingo.html?' + searchParams.toString();
+  }
+
+  function copySeedUrlToClipboard(seed): void {
+    const promise = navigator.clipboard.writeText(makeSeedUrl(seed));
+    promise.then(
+      () => console.log('SUCCESS'),
+      () => console.log('FAILURE')
+    );
+  }
+
+  function makeSeedUrl(seed) {
+    const searchParams = new URLSearchParams();
+    searchParams.append('seed', seed);
+    return BINGO_URL + `?${searchParams.toString()}`;
   }
 
   function handlePhrasesChange(): void {
@@ -82,6 +102,8 @@
 
   const FREE_SPACE = 'Free Space';
   let PHRASES_STR: string = '';
+  let SEED_INPUT: string = '';
+  let SEED = '';
   let EXPECTED_PHRASES: number = 24;
   let NUM_PHRASES: number = 0;
   let PHRASES_LEFT: number = EXPECTED_PHRASES - NUM_PHRASES;
@@ -124,6 +146,15 @@
         <option value="four-corners">Four Corners</option>
         <option value="whole-board">Whole Board</option>
       </select>
+      <label for="seed-text">Seed</label>
+      <input
+        name="seed"
+        bind:value="{SEED_INPUT}"
+        on:input="{genBingoUrl}"
+        placeholder="Enter seed (optional). This allows you to give everyone the same board layout."
+        class="form-control"
+        id="seed-text"
+      />
     </div>
 
     <div class="form-group">

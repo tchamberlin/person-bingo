@@ -34,6 +34,7 @@
     isOpen = event.detail.isOpen;
   }
   export let active;
+  export let seed;
 </script>
 
 <header>
@@ -52,12 +53,17 @@
         </NavItem>
       </Nav>
       <Nav class="ml-auto" navbar>
+        {#if seed}
+          <NavItem>
+            <span style="color: rgba(0,0,0,.5)">Seed: {seed}</span>
+          </NavItem>
+        {/if}
         <NavItem>
           <NavLink href="https://github.com/tchamberlin/person-bingo">
-            <span
-              >{'v[VI]{version}[/VI]'}
-              <img class="img-link" src="{githubLogo}" alt="GitHub Repo Link" /></span
-            >
+            <span>
+              {'v[VI]{version}[/VI]'}
+              <img class="img-link" src="{githubLogo}" alt="GitHub Repo Link" />
+            </span>
           </NavLink>
         </NavItem>
       </Nav>
