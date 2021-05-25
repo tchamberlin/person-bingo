@@ -329,7 +329,7 @@
     console.log('No saved board in localStorage; creating a new one');
     const params = new URLSearchParams(location.search);
     // Get unique prompts from query params
-    let prompts: Array<string> = [...new Set(params.getAll(CELL_PARAM_KEY))];
+    let prompts: Array<string> = [...new Set(params.getAll(CELL_PARAM_KEY))].sort();
     localStorage.setItem('bingo-prompts', JSON.stringify(prompts));
     board = genBoard();
   } else {

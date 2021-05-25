@@ -18,8 +18,23 @@ export function chunk(arr: Array<any>, len: number): Array<any> {
   return chunks;
 }
 
-// TODO: fix any. type is prng, but no idea how to specify that here
+// From https://stackoverflow.com/a/6274398/1883424
 export function shuffle(array: Array<any>, random: any): Array<any> {
-  const shuffled_indices = [...Array(array.length).keys()].sort(() => random.quick() - 0.5);
-  return shuffled_indices.map((i: number) => array[i]);
+  let counter = array.length;
+
+  // While there are elements in the array
+  while (counter > 0) {
+    // Pick a random index
+    let index = Math.floor(random.quick() * counter);
+
+    // Decrease counter by 1
+    counter--;
+
+    // And swap the last element with it
+    let temp = array[counter];
+    array[counter] = array[index];
+    array[index] = temp;
+  }
+
+  return array;
 }
