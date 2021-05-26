@@ -24,6 +24,7 @@
     );
   }
 
+  // TODO: Broken and no longer used, but could potentially be swapped for another shortener
   function handleShorten(): void {
     const urlToShorten = new URL(BINGO_URL, window.location.href).toString();
     fetch(`https://url.pizza/shorten/${urlToShorten}`)
@@ -48,10 +49,8 @@
     });
     searchParams.append('clear', '');
     searchParams.append('goal', win_condition);
-    console.log('add seed?');
     if (SEED_INPUT.length) {
       const seed = `${SEED_INPUT.replaceAll(/\s+/g, '_')}-${genRandomString()}`;
-      console.log('add seed', seed);
       searchParams.append('seed', seed);
     }
     BINGO_URL = './bingo.html?' + searchParams.toString();
@@ -135,6 +134,7 @@
   <form on:submit|preventDefault="{() => null}" id="wordsform" class="form">
     <div class="form-group">
       <label for="win-conditions">Win Condition (Board Pattern)</label>
+      <!-- svelte-ignore a11y-no-onchange -->
       <select
         class="form-control"
         name="win-conditions"
@@ -179,9 +179,6 @@
         <button class="btn btn-info" on:click="{handleCopyToClipboard}">
           📋 Copy link to clipboard 📋
         </button>
-        <button class="btn btn-info" on:click="{handleShorten}"
-          >📋 Copy shortened link to clipboard 📋</button
-        >
       {:else}
         <div class="d-flex flex-row align-items-center">
           <div class="p-2">
@@ -196,7 +193,8 @@
                 {NUM_PHRASES}/{EXPECTED_PHRASES}
               </span>
               required phrases. Use this button to fill in the
-              <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">{PHRASES_LEFT}</span> remaining.
+              <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">{PHRASES_LEFT}</span>
+              remaining.
             </div>
           </div>
         </div>

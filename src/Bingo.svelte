@@ -1,53 +1,53 @@
 <style type="text/css">
+  @media (max-width: 1025px) {
+    .container {
+      max-width: 95%;
+    }
+  }
   .not_found {
     cursor: pointer;
     transition: 0.5s;
   }
-  .found {
-    /* sky blue */
-    background-color: #75bbfd !important;
-    transition: 0.5s;
-    color: black;
-    cursor: pointer;
-  }
-  .duplicate {
-    transition: 0.5s;
-    /* pale orange */
-    background-color: #ffa756 !important;
-    color: black;
-    cursor: default;
-  }
-  .active {
-    transition: 0.5s;
-    /* pale blue */
-    background-color: #d0fefe !important;
-    color: black;
-    cursor: default;
-  }
-  .win {
-    transition: 0.5s;
-    /* pale green */
-    background-color: #c7fdb5 !important;
-    color: black;
-    cursor: default;
-  }
-  .free-space {
-    cursor: default;
-  }
-  td:nth-child(even) {
+  .table td:nth-child(even) {
     background-color: #f2f2f2;
   }
-  th:nth-child(even) {
+  .table th:nth-child(even) {
     background-color: #f2f2f2;
   }
   .table td,
   .table th {
     padding: 0.5rem;
   }
-  @media (max-width: 1025px) {
-    .container {
-      max-width: 95% !important;
-    }
+  .found {
+    /* sky blue */
+    background-color: #75bbfd !important;
+    color: black;
+    cursor: pointer;
+    transition: 0.5s;
+  }
+  .duplicate {
+    /* pale orange */
+    background-color: #ffa756 !important;
+    color: black;
+    cursor: default;
+    transition: 0.5s;
+  }
+  .active {
+    /* pale blue */
+    background-color: #d0fefe !important;
+    color: black;
+    cursor: default;
+    transition: 0.5s;
+  }
+  .win {
+    /* pale green */
+    background-color: #c7fdb5 !important;
+    color: black;
+    cursor: default;
+    transition: 0.5s;
+  }
+  .free-space {
+    cursor: default;
   }
 </style>
 
@@ -72,18 +72,20 @@
   type Row = Array<Cell>;
   type Board = Array<Row>;
 
-  function genBoard({ resetSeed = false } = {}) {
+  // TODO: figure out how to set this up to keepvalues!
+  function genBoard({ resetSeed = false, keepValues = false } = {}) {
     let seed: string = localStorage.getItem('bingo-seed');
-    console.log(`Got seed ${seed}`);
+    console.log('Got bingo-seed from localStorage:', seed);
     if (seed == null || resetSeed) {
       seed = genRandomString();
-      console.log(`Set seed to ${seed}`);
+      console.log(`Set localStorage.bingo-seed to: ${seed}`);
       localStorage.setItem('bingo-seed', seed);
     }
 
     let prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-prompts')) || [];
-    console.log(`Got prompts`, prompts);
+    console.log(`Got localStorage.prompts`, prompts);
     if (prompts.length === 0) {
+      console.log('No prompts; bailing out of board gen');
       return [];
     }
 
@@ -106,6 +108,7 @@
     const board: Board = chunk(cells.slice(0, 25), 5);
     // Save the board to localStorage (so it will survive refreshes, etc)
     localStorage.setItem('bingo-board', JSON.stringify(board));
+    console.log('saved board2', board);
     checkBoard(board);
     return board;
   }
@@ -240,9 +243,13 @@
       })
     );
 
-    VICTORY = Boolean(wonCells.length);
+    // Debounce (sort of). This avoid having to close the modal multiple times, for example
+    const nowVictory = Boolean(wonCells.length);
+    if (VICTORY !== nowVictory) {
+      VICTORY = Boolean(wonCells.length);
+    }
     if (VICTORY) {
-      toggle_win_modal();
+      window.setTimeout(() => (WIN_MODAL_OPEN = true), 100);
     }
   }
 
@@ -252,6 +259,7 @@
     board[row][col].state.active = false;
 
     const boardStr = JSON.stringify(board);
+    console.log('saved board', board);
     localStorage.setItem('bingo-board', boardStr);
     checkBoard(board);
   }
@@ -282,12 +290,9 @@
   const FREE_SPACE = 'Free Space';
   const CELL_PARAM_KEY = 'c';
   const WIN_CONDITION_PARAM_KEY = 'goal';
-  const SEED_PARAM_KEY = 'seed';
   const BINGO_LETTERS = 'BINGO';
   const url: URL = new URL(location.href);
   let WIN_CONDITION = url.searchParams.get(WIN_CONDITION_PARAM_KEY) || 'line';
-  let SEED = url.searchParams.get(SEED_PARAM_KEY) || null;
-  let ALLOW_SHUFFLE = !Boolean(SEED);
 
   const RULES = {
     line: {
@@ -307,10 +312,19 @@
     },
   };
 
-  if (SEED !== null) {
-    localStorage.setItem(`bingo-seed`, JSON.stringify(SEED));
+  const SEED_PARAM_KEY = 'seed';
+  let SEED = localStorage.getItem('bingo-seed');
+  let ALLOW_SHUFFLE = true;
+  let seedParam = url.searchParams.get(SEED_PARAM_KEY) || null;
+  if (seedParam !== null) {
+    if (seedParam !== SEED) {
+      console.log('Seed changed from', SEED, 'to', seedParam);
+      genBoard();
+    }
+    SEED = seedParam;
+    ALLOW_SHUFFLE = !Boolean(SEED);
+    localStorage.setItem('bingo-seed', SEED);
     console.log('Got seed', SEED, 'from params; saved to localStorage');
-    genBoard();
   }
 
   // If 'clear' is given as a param, regardless of its value, user has requested
@@ -319,7 +333,8 @@
   if (resetBoardRequested) {
     console.log('Cleared board due to clear= URL param');
     url.searchParams.delete('clear');
-    localStorage.removeItem('bingo-board');
+    // Clear out ALL localStorage, just to be safe!
+    localStorage.clear();
     window.location.assign(url.toString());
   }
 
@@ -334,7 +349,7 @@
     board = genBoard();
   } else {
     board = JSON.parse(boardStr);
-    console.log('Found board in localStorage');
+    console.log('Found board in localStorage', board);
 
     checkBoard(board);
   }
