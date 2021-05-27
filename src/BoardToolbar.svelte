@@ -27,6 +27,19 @@
     );
   }
 
+  function decrementConfettiMultiplier() {
+    CONFETTI = confettiIsActive();
+    if (confettiMultiplier > 1) {
+      confettiMultiplier -= 1;
+    }
+  }
+  function incrementConfettiMultiplier() {
+    CONFETTI = confettiIsActive();
+    if (confettiMultiplier < 5) {
+      confettiMultiplier += 1;
+    }
+  }
+
   let userIsSureTheyWantToClear = false;
   let userIsSureTheyWantToSubmit = false;
 
@@ -37,10 +50,14 @@
   // TODO Type rules
   export let rule;
   export let originalBoardUrl: string;
-  export let confettiDensity: number;
+  export let enableConfetti = false;
+  let confettiMultiplier = 1;
   export let toggleConfetti: () => void;
-  export let victory: boolean;
-  let CONFETTI = victory;
+  export let confettiIsActive: () => bool;
+  let CONFETTI = confettiIsActive();
+  // Force CONFETTI to update when enableConfetti does. This avoids a weird
+  // bug, but could definitely be cleaner
+  $: enableConfetti: CONFETTI = enableConfetti;
 </script>
 
 <div class="container-fluid">
@@ -86,22 +103,24 @@
             📜 Rules
           </button>
         </div>
-        <div class="pr-2">
-          <button
-            class="btn btn-secondary btn-sm"
-            on:click="{handleCopyToClipboard}"
-            title="Copy the full URL for this Bingo board to your clipboard (can be used to share with others)"
-          >
-            📋 URL
-          </button>
-        </div>
-        {#if confettiDensity !== null}
+        {#if false}
+          <div class="pr-2">
+            <button
+              class="btn btn-secondary btn-sm"
+              on:click="{handleCopyToClipboard}"
+              title="Copy the full URL for this Bingo board to your clipboard (can be used to share with others)"
+            >
+              📋 URL
+            </button>
+          </div>
+        {/if}
+        {#if enableConfetti}
           <div class="pr-2">
             <div class="btn-group" role="group" aria-label="Basic example">
               <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                on:click="{() => (confettiDensity /= 1.25)}"
+                on:click="{decrementConfettiMultiplier}"
               >
                 -
               </button>
@@ -111,14 +130,14 @@
                 class:btn-success="{CONFETTI}"
                 class:btn-danger="{!CONFETTI}"
                 on:click="{() => {
-                  CONFETTI = toggleConfetti();
-                  console.log('CONFETTI', CONFETTI);
-                }}">🎉<small>x{Math.round(confettiDensity)}</small></button
+                  CONFETTI = toggleConfetti({ particleCount: 100 * confettiMultiplier });
+                }}"
+                >{#each [...Array(confettiMultiplier)] as _}🎉{/each}</button
               >
               <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                on:click="{() => (confettiDensity *= 1.25)}"
+                on:click="{incrementConfettiMultiplier}"
               >
                 +
               </button>

@@ -104,7 +104,11 @@
     $originalBoardUrlStore = url.toString();
   }
 
-  $winConditionStore = url.searchParams.get(PARAM_KEYS.WIN_CONDITION) || DEFAULT_WIN_CONDITION;
+  const winCondition = url.searchParams.get(PARAM_KEYS.WIN_CONDITION);
+  if (winCondition && winCondition !== $winConditionStore) {
+    $winConditionStore = winCondition;
+  }
+  let rule = RULES[$winConditionStore] || RULES[DEFAULT_WIN_CONDITION];
 
   let seedParam = url.searchParams.get(PARAM_KEYS.SEED) || null;
   console.log('seedParam', seedParam);
@@ -143,7 +147,7 @@
     }
   }
   console.log('$originalBoardUrlStore', $originalBoardUrlStore);
-  if (STATE.DO_CLEAR_DATA) {
+  if (STATE.DO_CLEAR_DATA || url.search.length) {
     window.history.replaceState({}, '', url.pathname);
     STATE.DO_CLEAR_DATA = false;
   }
@@ -153,15 +157,15 @@
 <main role="main" class="container">
   {#if $boardStore?.length}
     <BoardToolbar
-      rule="{RULES[$winConditionStore]}"
+      rule="{rule}"
       clearBoard="{clearBoard}"
       genBoard="{genBoard}"
       originalBoardUrl="{$originalBoardUrlStore}"
       toggleRulesModal="{() => toggleModal('RULES_MODAL_OPEN')}"
       allowShuffle="{STATE.ALLOW_SHUFFLE}"
-      confettiDensity="{$victoryStore ? confettiDensity : null}"
+      enableConfetti="{$victoryStore}"
       toggleConfetti="{toggleConfetti}"
-      victory="{$victoryStore}"
+      confettiIsActive="{confettiIsActive}"
     />
     <Board
       freeSpace="{DEFAULT_FREE_SPACE}"

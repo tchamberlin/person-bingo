@@ -8,6 +8,7 @@ const defaults = {
   spread: 360,
   ticks: 250,
   zIndex: 2000,
+  particleCount: density,
   gravity: randomInRange(0.3, 0.6),
 };
 
@@ -20,9 +21,9 @@ export function confettiIsActive() {
   return confettiActive;
 }
 
-export function toggleConfetti() {
+export function toggleConfetti(options) {
   if (!confettiActive) {
-    startConfetti();
+    startConfetti(options || {});
     console.log('toggle confetti on', confettiActive);
     return true;
   } else {
@@ -36,9 +37,10 @@ export function stopConfetti() {
   confettiActive = false;
 }
 
-export const startConfetti = () => {
+export const startConfetti = (options) => {
   const animationEnd = Date.now() + duration;
-  console.log(`starting confetti; end at ${animationEnd}`);
+  options = options || {};
+  console.log(`starting confetti; end at ${animationEnd}; given options:`, options);
   if (!confettiActive) {
     confettiActive = true;
 
@@ -49,16 +51,15 @@ export const startConfetti = () => {
         return clearInterval(interval);
       }
 
-      const particleCount = density;
       // since particles fall down, start a bit higher than random
       confetti({
         ...defaults,
-        particleCount: particleCount,
+        ...options,
         origin: { x: randomInRange(0.2, 0.5), y: Math.random() - 0.2 },
       });
       confetti({
         ...defaults,
-        particleCount: particleCount,
+        ...options,
         origin: { x: randomInRange(0.5, 0.8), y: Math.random() - 0.2 },
       });
     }, 2000);

@@ -1,3 +1,4 @@
+import { DEFAULT_WIN_CONDITION } from './defaults';
 import type { Board, Row, Cell } from './types';
 
 function cellIsValid(cell) {
@@ -179,7 +180,8 @@ export function checkBoard(board: Board, winCondition: string): boolean {
     })
   );
 
-  const wonCells = RULES[winCondition].function(board);
+  const rule = RULES[winCondition] || RULES[DEFAULT_WIN_CONDITION];
+  const wonCells = rule.function(board);
 
   board.forEach((row: Row, ri: number) =>
     row.forEach((_, ci: number) => {
