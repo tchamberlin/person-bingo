@@ -10,6 +10,7 @@
     winConditionStore,
     victoryStore,
     originalBoardUrlStore,
+    allowShuffleStore,
   } from './stores/boardStore';
 
   import Board from './Board.svelte';
@@ -26,6 +27,23 @@
   } from './confetti';
 
   const numCellsInBoard = DEFAULT_BINGO_LETTERS.length ** 2;
+
+  // TODO: consolidate with CreateBoard.genBingoUrl
+  function genBingoUrl() {
+    const searchParams = new URLSearchParams();
+    $promptsStore.forEach((phrase) => {
+      const trimmed: string = phrase.trim();
+      if (trimmed.length) {
+        searchParams.append(PARAM_KEYS.CELL, trimmed);
+      }
+    });
+    searchParams.append(PARAM_KEYS.CLEAR, '');
+    searchParams.append(PARAM_KEYS.WIN_CONDITION, $winConditionStore);
+    searchParams.append(PARAM_KEYS.SEED, $seedStore);
+    const foo = './bingo.html?' + searchParams.toString();
+    console.log('genBingoUrl', foo);
+    return foo;
+  }
 
   function genCell(title) {
     return {
@@ -99,9 +117,8 @@
       $seedStore = null;
       $winConditionStore = DEFAULT_WIN_CONDITION;
       $victoryStore = false;
-      $originalBoardUrlStore = null;
+      $allowShuffleStore = true;
     }
-    $originalBoardUrlStore = url.toString();
   }
 
   const winCondition = url.searchParams.get(PARAM_KEYS.WIN_CONDITION);
@@ -119,7 +136,7 @@
       genBoard();
     }
     $seedStore = seedParam;
-    STATE.ALLOW_SHUFFLE = !Boolean($seedStore);
+    $allowShuffleStore = !Boolean($seedStore);
   }
 
   if ($boardStore.length === 0) {
@@ -151,18 +168,18 @@
     window.history.replaceState({}, '', url.pathname);
     STATE.DO_CLEAR_DATA = false;
   }
+
 </script>
 
-<Nav active="play" seed="{$seedStore}" />
+<Nav active="play" seed="{$seedStore}" bingoUrl="{genBingoUrl()}" />
 <main role="main" class="container">
   {#if $boardStore?.length}
     <BoardToolbar
       rule="{rule}"
       clearBoard="{clearBoard}"
       genBoard="{genBoard}"
-      originalBoardUrl="{$originalBoardUrlStore}"
       toggleRulesModal="{() => toggleModal('RULES_MODAL_OPEN')}"
-      allowShuffle="{STATE.ALLOW_SHUFFLE}"
+      allowShuffle="{$allowShuffleStore}"
       enableConfetti="{$victoryStore}"
       toggleConfetti="{toggleConfetti}"
       confettiIsActive="{confettiIsActive}"

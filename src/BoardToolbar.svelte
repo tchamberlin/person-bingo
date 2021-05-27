@@ -19,14 +19,6 @@
     }
   }
 
-  function handleCopyToClipboard(): void {
-    const promise = navigator.clipboard.writeText(originalBoardUrl);
-    promise.then(
-      () => console.log('SUCCESS: Copied', originalBoardUrl, 'to clipboard'),
-      () => console.log('FAILURE: Could not copy', originalBoardUrl, 'to clipboard')
-    );
-  }
-
   function decrementConfettiMultiplier() {
     CONFETTI = confettiIsActive();
     if (confettiMultiplier > 1) {
@@ -49,7 +41,6 @@
   export let allowShuffle: boolean;
   // TODO Type rules
   export let rule;
-  export let originalBoardUrl: string;
   export let enableConfetti = false;
   let confettiMultiplier = 1;
   export let toggleConfetti: () => void;
@@ -104,17 +95,6 @@
             📜 Rules
           </button>
         </div>
-        {#if false}
-          <div class="pe-2">
-            <button
-              class="btn btn-secondary btn-sm"
-              on:click="{handleCopyToClipboard}"
-              title="Copy the full URL for this Bingo board to your clipboard (can be used to share with others)"
-            >
-              📋 URL
-            </button>
-          </div>
-        {/if}
         {#if enableConfetti}
           <div class="pe-2">
             <div class="btn-group" role="group" aria-label="Basic example">

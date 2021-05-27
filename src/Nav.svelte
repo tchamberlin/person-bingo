@@ -11,6 +11,11 @@
     max-height: 1rem;
   }
 
+  .seed-button {
+    color: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+  }
+
 </style>
 
 <script lang="ts">
@@ -30,11 +35,20 @@
 
   let isOpen = false;
 
+  function handleCopyToClipboard(): void {
+    const promise = navigator.clipboard.writeText(bingoUrl);
+    promise.then(
+      () => console.log('SUCCESS: Copied', bingoUrl, 'to clipboard'),
+      () => console.log('FAILURE: Could not copy', bingoUrl, 'to clipboard')
+    );
+  }
+
   function handleUpdate(event) {
     isOpen = event.detail.isOpen;
   }
   export let active;
   export let seed;
+  export let bingoUrl;
 
 </script>
 
@@ -56,7 +70,11 @@
       <Nav class="ms-auto" navbar>
         {#if seed}
           <NavItem>
-            <span style="color: rgba(0,0,0,.5)">Seed: {seed}</span>
+            <span
+              class="seed-button"
+              title="Copy bingo URL to clipboard (e.g. to share with others)"
+              on:click="{handleCopyToClipboard}">Seed: {seed}</span
+            >
           </NavItem>
         {/if}
         <NavItem>
