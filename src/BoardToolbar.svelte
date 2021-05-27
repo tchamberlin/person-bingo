@@ -1,4 +1,6 @@
 <script lang="ts">
+  import WinTypePreview from './WinTypePreview.svelte';
+
   function handleShuffleBoard(): void {
     if (userIsSureTheyWantToSubmit) {
       genBoard({ resetSeed: true });
@@ -32,12 +34,13 @@
   export let genBoard: () => void;
   export let clearBoard: () => void;
   export let allowShuffle: boolean;
-  export let winConditionBlurb: string;
+  // TODO Type rules
+  export let rule;
   export let originalBoardUrl: string;
   export let confettiDensity: number;
   export let toggleConfetti: () => void;
-  export let confettiIsActive: () => bool;
-  let CONFETTI = confettiIsActive();
+  export let victory: boolean;
+  let CONFETTI = victory;
 </script>
 
 <div class="container-fluid">
@@ -124,13 +127,16 @@
         {/if}
       </div>
     </div>
-    <div class="col-xs-6 ml-auto text-right">
+    <div class="col-xs-4 ml-auto text-right">
       <div>
         <small>Find people that match the prompt in each cell. A name can be used only once</small>
       </div>
       <div>
-        <small>After you <strong>{winConditionBlurb}</strong>, you win!</small>
+        <small>After you <strong>{rule.blurb}</strong>, you win!</small>
       </div>
+    </div>
+    <div class="col-xs-2">
+      <WinTypePreview rule="{rule}" />
     </div>
   </div>
 </div>

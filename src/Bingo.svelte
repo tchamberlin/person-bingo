@@ -153,7 +153,7 @@
 <main role="main" class="container">
   {#if $boardStore?.length}
     <BoardToolbar
-      winConditionBlurb="{RULES[$winConditionStore].blurb}"
+      rule="{RULES[$winConditionStore]}"
       clearBoard="{clearBoard}"
       genBoard="{genBoard}"
       originalBoardUrl="{$originalBoardUrlStore}"
@@ -161,7 +161,7 @@
       allowShuffle="{STATE.ALLOW_SHUFFLE}"
       confettiDensity="{$victoryStore ? confettiDensity : null}"
       toggleConfetti="{toggleConfetti}"
-      confettiIsActive="{confettiIsActive}"
+      victory="{$victoryStore}"
     />
     <Board
       freeSpace="{DEFAULT_FREE_SPACE}"

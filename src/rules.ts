@@ -1,15 +1,4 @@
-interface Cell {
-  title: string;
-  value: string;
-  state: {
-    found: boolean;
-    active: boolean;
-    win: boolean;
-    duplicate: boolean;
-  };
-}
-type Row = Array<Cell>;
-type Board = Array<Row>;
+import type { Board, Row, Cell } from './types';
 
 function cellIsValid(cell) {
   return cell.state.found && !cell.state.duplicate;
@@ -20,22 +9,25 @@ export const RULES = {
     name: 'Standard',
     blurb: 'complete a horizontal, vertical, OR diagonal line',
     function: checkLineWin,
+    examples: [exampleRowWin, exampleColWin, exampleDiagonalWin],
   },
   'four-corners': {
     name: 'Four Corners',
     blurb: 'complete all four corners of the board',
     function: checkFourCornersWin,
+    examples: [exampleFourCornersWin],
   },
   'whole-board': {
     name: 'Whole Board',
     blurb: 'complete EVERY square on the board',
     function: checkWholeBoardWin,
+    examples: [exampleWholeBoardWin],
   },
 };
 
 function checkRowWin(board: Board): Array<string> {
   let wonCells = [];
-  board.forEach((row: Array<Cell>, ri: number) => {
+  board.forEach((row: Row, ri: number) => {
     if (row.every((cell: Cell) => cellIsValid(cell))) {
       row.forEach((_, ci: number) => wonCells.push(`${ri}x${ci}`));
     }
@@ -43,15 +35,39 @@ function checkRowWin(board: Board): Array<string> {
   return wonCells;
 }
 
+function exampleRowWin(): Array<Array<boolean>> {
+  let example = [];
+  for (let ri = 0; ri < 5; ri++) {
+    let row = [];
+    for (let ci = 0; ci < 5; ci++) {
+      row.push(ri === 0);
+    }
+    example.push(row);
+  }
+  return example;
+}
+
 function checkColWin(board: Board): Array<string> {
   let wonCells = [];
   // TODO: will break with non-square boards
   [...Array(board.length).keys()].forEach((ci: number) => {
-    if (board.every((row: Array<Cell>) => cellIsValid(row[ci]))) {
+    if (board.every((row: Row) => cellIsValid(row[ci]))) {
       board.forEach((_, ri: number) => wonCells.push(`${ri}x${ci}`));
     }
   });
   return wonCells;
+}
+
+function exampleColWin(): Array<Array<boolean>> {
+  let example = [];
+  for (let ri = 0; ri < 5; ri++) {
+    let row = [];
+    for (let ci = 0; ci < 5; ci++) {
+      row.push(ci === 0);
+    }
+    example.push(row);
+  }
+  return example;
 }
 
 function checkDiagonalWin(board: Board): Array<string> {
@@ -66,23 +82,53 @@ function checkDiagonalWin(board: Board): Array<string> {
   return wonCells;
 }
 
+function exampleDiagonalWin(): Array<Array<boolean>> {
+  let example = [];
+  for (let ri = 0; ri < 5; ri++) {
+    let row = [];
+    for (let ci = 0; ci < 5; ci++) {
+      row.push(ci === ri);
+    }
+    example.push(row);
+  }
+  return example;
+}
+
 function checkLineWin(board: Board) {
   const wonCells = [...checkRowWin(board), ...checkDiagonalWin(board), ...checkColWin(board)];
   return wonCells;
 }
 
 function checkFourCornersWin(board: Board): Array<string> {
-  return cellIsValid(board[0][0]) &&
-    cellIsValid(board[0][4]) &&
-    cellIsValid(board[4][0]) &&
-    cellIsValid(board[4][4])
-    ? ['0x0', '0x4', '4x0', '4x4']
+  const topLeft = [0, 0];
+  const topRight = [0, board[0].length - 1];
+  const bottomLeft = [board[board.length - 1].length - 1, 0];
+  const bottomRight = [board[board.length - 1].length - 1, board[board.length - 1].length - 1];
+  return cellIsValid(board[topLeft[0]][topLeft[1]]) &&
+    cellIsValid(board[topRight[0]][topRight[1]]) &&
+    cellIsValid(board[bottomLeft[0]][bottomLeft[1]]) &&
+    cellIsValid(board[bottomRight[0]][bottomRight[1]])
+    ? [topLeft.join('x'), topRight.join('x'), bottomLeft.join('x'), bottomRight.join('x')]
     : [];
+}
+
+function exampleFourCornersWin(): Array<Array<boolean>> {
+  let example = [];
+  for (let ri = 0; ri < 5; ri++) {
+    let row = [];
+    for (let ci = 0; ci < 5; ci++) {
+      row.push(
+        (ri == 0 && ci == 0) || (ri == 0 && ci == 4) || (ri == 4 && ci == 0) || (ri == 4 && ci == 4)
+      );
+    }
+    example.push(row);
+  }
+  return example;
 }
 
 function checkWholeBoardWin(board: Board): Array<string> {
   let win = true;
-  board.forEach((row: Array<Cell>) =>
+  board.forEach((row: Row) =>
     row.forEach((cell: Cell) => {
       if (!cellIsValid(cell)) {
         win = false;
@@ -92,7 +138,7 @@ function checkWholeBoardWin(board: Board): Array<string> {
 
   let wonCells = [];
   if (win) {
-    board.forEach((row, ri: number) =>
+    board.forEach((row: Row, ri: number) =>
       row.forEach((_, ci: number) => {
         wonCells.push(`${ri}x${ci}`);
       })
@@ -101,10 +147,22 @@ function checkWholeBoardWin(board: Board): Array<string> {
   return wonCells;
 }
 
+function exampleWholeBoardWin(): Array<Array<boolean>> {
+  let example = [];
+  for (let ri = 0; ri < 5; ri++) {
+    let row = [];
+    for (let ci = 0; ci < 5; ci++) {
+      row.push(true);
+    }
+    example.push(row);
+  }
+  return example;
+}
+
 export function checkBoard(board: Board, winCondition: string): boolean {
   console.debug('checkBoard', board, winCondition);
   const allValues = [];
-  board.forEach((row: Array<Cell>) =>
+  board.forEach((row: Row) =>
     row.forEach((cell: Cell) => {
       if (cell.value.trim() !== '') {
         allValues.push(cell.value.trim());
@@ -113,7 +171,7 @@ export function checkBoard(board: Board, winCondition: string): boolean {
   );
 
   // Check duplicates first
-  board.forEach((row: Array<Cell>, ri: number) =>
+  board.forEach((row: Row, ri: number) =>
     row.forEach((cell: Cell, ci: number) => {
       board[ri][ci].state.duplicate =
         allValues.filter((value) => value.trim().toLowerCase() === cell.value.trim().toLowerCase())
@@ -123,7 +181,7 @@ export function checkBoard(board: Board, winCondition: string): boolean {
 
   const wonCells = RULES[winCondition].function(board);
 
-  board.forEach((row: Array<Cell>, ri: number) =>
+  board.forEach((row: Row, ri: number) =>
     row.forEach((_, ci: number) => {
       board[ri][ci].state.win = wonCells.indexOf(`${ri}x${ci}`) !== -1;
     })

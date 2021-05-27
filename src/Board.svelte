@@ -57,20 +57,7 @@
   import { boardStore, victoryStore } from './stores/boardStore';
   import { checkBoard } from './rules';
   import { DEFAULT_FREE_SPACE, DEFAULT_BINGO_LETTERS, DEFAULT_WIN_CONDITION } from './defaults';
-
-  interface Cell {
-    title: string;
-    value: string;
-    state: {
-      found: boolean;
-      active: boolean;
-      win: boolean;
-      duplicate: boolean;
-      immediateDuplicate: boolean;
-    };
-  }
-  type Row = Array<Cell>;
-  type Board = Array<Row>;
+  import type { Board, Row, Cell } from './types';
 
   // TODO: Move defaults elsewhere
   export let freeSpace = DEFAULT_FREE_SPACE;
