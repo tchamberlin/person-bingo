@@ -56,6 +56,13 @@
     cursor: default;
   }
 
+  table .w-1 {
+    width: 1%;
+  }
+  table .w-20 {
+    width: 19.8%;
+  }
+
 </style>
 
 <script lang="ts">
@@ -145,7 +152,7 @@
 
 <table class="table table-bordered">
   <thead>
-    <th></th>
+    <th class="w-1"></th>
     {#each bingoLetters as letter}
       <th class="text-center">{letter}</th>
     {/each}
@@ -156,7 +163,7 @@
         <th class="align-middle">{ri + 1}</th>
         {#each row as cell, ci}
           <td
-            class="bingo-cell align-middle {getCellClass(cell)}"
+            class="w-20 bingo-cell align-middle {getCellClass(cell)}"
             on:click="{() => handleSelectCell(cell, ri, ci)}"
           >
             {#if false}
