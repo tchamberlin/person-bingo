@@ -17,6 +17,13 @@
   import Nav from './Nav.svelte';
   import RulesModal from './RulesModal.svelte';
   import WinModal from './WinModal.svelte';
+  import {
+    density as confettiDensity,
+    startConfetti,
+    stopConfetti,
+    toggleConfetti,
+    confettiIsActive,
+  } from './confetti';
 
   const numCellsInBoard = DEFAULT_BINGO_LETTERS.length ** 2;
 
@@ -130,6 +137,9 @@
   $: {
     if ($victoryStore === true) {
       window.setTimeout(() => toggleModal('WIN_MODAL_OPEN'), 300);
+      startConfetti();
+    } else {
+      stopConfetti();
     }
   }
   console.log('$originalBoardUrlStore', $originalBoardUrlStore);
@@ -149,6 +159,9 @@
       originalBoardUrl="{$originalBoardUrlStore}"
       toggleRulesModal="{() => toggleModal('RULES_MODAL_OPEN')}"
       allowShuffle="{STATE.ALLOW_SHUFFLE}"
+      confettiDensity="{$victoryStore ? confettiDensity : null}"
+      toggleConfetti="{toggleConfetti}"
+      confettiIsActive="{confettiIsActive}"
     />
     <Board
       freeSpace="{DEFAULT_FREE_SPACE}"

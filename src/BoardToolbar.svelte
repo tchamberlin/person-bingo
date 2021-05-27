@@ -34,6 +34,10 @@
   export let allowShuffle: boolean;
   export let winConditionBlurb: string;
   export let originalBoardUrl: string;
+  export let confettiDensity: number;
+  export let toggleConfetti: () => void;
+  export let confettiIsActive: () => bool;
+  let CONFETTI = confettiIsActive();
 </script>
 
 <div class="container-fluid">
@@ -88,6 +92,36 @@
             📋 URL
           </button>
         </div>
+        {#if confettiDensity !== null}
+          <div class="pr-2">
+            <div class="btn-group" role="group" aria-label="Basic example">
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                on:click="{() => (confettiDensity /= 1.25)}"
+              >
+                -
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                class:btn-success="{CONFETTI}"
+                class:btn-danger="{!CONFETTI}"
+                on:click="{() => {
+                  CONFETTI = toggleConfetti();
+                  console.log('CONFETTI', CONFETTI);
+                }}">🎉<small>x{Math.round(confettiDensity)}</small></button
+              >
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                on:click="{() => (confettiDensity *= 1.25)}"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        {/if}
       </div>
     </div>
     <div class="col-xs-6 ml-auto text-right">
