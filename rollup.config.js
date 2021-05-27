@@ -9,6 +9,7 @@ import css from 'rollup-plugin-css-only';
 import image from '@rollup/plugin-image';
 import copy from 'rollup-plugin-copy';
 import versionInjector from 'rollup-plugin-version-injector';
+import strip from '@rollup/plugin-strip';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -82,7 +83,8 @@ const genBundleConfig = (name) => ({
     // Watch the `public` directory and refresh the
     // browser on changes when not in production
     !production && livereload('public'),
-
+    // Remove _some_ console statements in production
+    production && strip({ functions: ['console.debug'] }),
     // If we're building for production (npm run build
     // instead of npm run dev), minify
     production && terser(),

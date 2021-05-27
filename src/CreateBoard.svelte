@@ -10,10 +10,10 @@
 </style>
 
 <script lang="ts">
-  import seedrandom from 'seedrandom';
   import suggestions from './suggested_prompts';
   import { shuffle, genRandomString } from './utils';
   import Nav from './Nav.svelte';
+  import { DEFAULT_WIN_CONDITION } from './defaults';
 
   function handleCopyToClipboard(): void {
     const phrasesText = document.getElementById('go-to-bingo-board') as HTMLAnchorElement;
@@ -85,16 +85,13 @@
   }
 
   function loadSuggestedPrompts(): void {
-    const random = seedrandom();
     const phrases = PHRASES_STR.split('\n').map((phrase) => phrase.trim());
     // Make sure we don't suggest something that's already being used!
-    const unused_suggestions = shuffle(suggestions, random).filter(
-      (phrase) => !phrases.includes(phrase)
-    );
+    const unused_suggestions = shuffle(suggestions).filter((phrase) => !phrases.includes(phrase));
     if (PHRASES_STR.trim().length) {
       PHRASES_STR = [...phrases, ...unused_suggestions.slice(0, PHRASES_LEFT)].join('\n');
     } else {
-      PHRASES_STR = shuffle(suggestions, random).slice(0, PHRASES_LEFT).join('\n');
+      PHRASES_STR = shuffle(suggestions).slice(0, PHRASES_LEFT).join('\n');
     }
     handlePhrasesChange();
   }
@@ -114,7 +111,7 @@
   let SHORTENED_URL: string = '';
   let UNIQUE_ERROR = false;
 
-  let win_condition = 'line';
+  let win_condition = DEFAULT_WIN_CONDITION;
 
   const prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-prompts')) || [];
   if (prompts.length > 0) {
