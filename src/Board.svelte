@@ -3,6 +3,10 @@
     cursor: pointer;
     transition: 0.5s;
   }
+  /* Fix bug where top left cell isn't bordered on the left */
+  .table-bordered > :not(caption) > * {
+    border-width: 1px 1px;
+  }
   .table td:nth-child(even) {
     background-color: #f2f2f2;
   }
@@ -51,6 +55,7 @@
   .free-space {
     cursor: default;
   }
+
 </style>
 
 <script lang="ts">
@@ -135,6 +140,7 @@
     $boardStore[row][col].state.active = false;
     $victoryStore = checkBoard($boardStore, winCondition);
   }
+
 </script>
 
 <table class="table table-bordered">

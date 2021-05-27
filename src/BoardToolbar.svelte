@@ -58,13 +58,14 @@
   // Force CONFETTI to update when enableConfetti does. This avoids a weird
   // bug, but could definitely be cleaner
   $: enableConfetti: CONFETTI = enableConfetti;
+
 </script>
 
 <div class="container-fluid">
   <div class="row align-items-center">
-    <div class="col-xs-6">
+    <div class="col-xl-6 p-0">
       <div class="d-flex flex-row align-items-center">
-        <div class="pr-2">
+        <div class="pe-2">
           <button
             on:click="{handleClearBoard}"
             class="btn btn-sm"
@@ -79,7 +80,7 @@
           </button>
         </div>
         {#if allowShuffle}
-          <div class="pr-2">
+          <div class="pe-2">
             <button
               on:click="{handleShuffleBoard}"
               class="btn btn-sm"
@@ -94,7 +95,7 @@
             </button>
           </div>
         {/if}
-        <div class="pr-2">
+        <div class="pe-2">
           <button
             on:click="{toggleRulesModal}"
             class="btn btn-info btn-sm"
@@ -104,7 +105,7 @@
           </button>
         </div>
         {#if false}
-          <div class="pr-2">
+          <div class="pe-2">
             <button
               class="btn btn-secondary btn-sm"
               on:click="{handleCopyToClipboard}"
@@ -115,7 +116,7 @@
           </div>
         {/if}
         {#if enableConfetti}
-          <div class="pr-2">
+          <div class="pe-2">
             <div class="btn-group" role="group" aria-label="Basic example">
               <button
                 type="button"
@@ -146,16 +147,20 @@
         {/if}
       </div>
     </div>
-    <div class="col-xs-4 ml-auto text-right">
-      <div>
-        <small>Find people that match the prompt in each cell. A name can be used only once</small>
+    <div class="col-xl-6 ms-auto p-0">
+      <div class="d-flex flex-row justify-content-end align-items-center">
+        <div class="pe-1">
+          <div>
+            <small>Find unique people that match the prompt in each cell</small>
+          </div>
+          <div>
+            <small>After you <strong>{rule.blurb}</strong>, you win!</small>
+          </div>
+        </div>
+        <div class="ps-1">
+          <WinTypePreview rule="{rule}" />
+        </div>
       </div>
-      <div>
-        <small>After you <strong>{rule.blurb}</strong>, you win!</small>
-      </div>
-    </div>
-    <div class="col-xs-2">
-      <WinTypePreview rule="{rule}" />
     </div>
   </div>
 </div>

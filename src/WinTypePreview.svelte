@@ -9,17 +9,19 @@
   .filled {
     background-color: #75bbfd;
   }
+
 </style>
 
 <script lang="ts">
   export let rule;
   // Execute all of the example-creation functions to get the grids
   let exampleGrids = rule.examples.map((exampleFunc) => exampleFunc());
+
 </script>
 
 <div class="d-flex flex-row align-items-center">
   {#each exampleGrids as grid}
-    <div class="pl-2">
+    <div class="ps-2">
       <table>
         {#each grid as row}
           <tr>

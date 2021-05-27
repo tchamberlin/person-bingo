@@ -10,6 +10,7 @@
   :global(.img-link) {
     max-height: 1rem;
   }
+
 </style>
 
 <script lang="ts">
@@ -21,7 +22,6 @@
     Nav,
     NavItem,
     NavLink,
-    UncontrolledDropdown,
     DropdownToggle,
     DropdownMenu,
     DropdownItem,
@@ -35,6 +35,7 @@
   }
   export let active;
   export let seed;
+
 </script>
 
 <header>
@@ -45,14 +46,14 @@
       <Nav navbar>
         <NavItem>
           <NavLink href="./" active="{active === 'create'}"
-            >Create <span class="sr-only">(current)</span></NavLink
+            >Create <span class="visually-hidden">(current)</span></NavLink
           >
         </NavItem>
         <NavItem>
           <NavLink href="./bingo.html" active="{active === 'play'}">Play</NavLink>
         </NavItem>
       </Nav>
-      <Nav class="ml-auto" navbar>
+      <Nav class="ms-auto" navbar>
         {#if seed}
           <NavItem>
             <span style="color: rgba(0,0,0,.5)">Seed: {seed}</span>
