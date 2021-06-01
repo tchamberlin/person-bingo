@@ -7,71 +7,73 @@
     color: green;
     font-weight: bold;
   }
+
 </style>
 
 <script lang="ts">
+  import { Circle as CircleLoading } from 'svelte-loading-spinners';
+
   import suggestions from './suggested_prompts';
   import { shuffle, genRandomString } from './utils';
   import Nav from './Nav.svelte';
+  import MessageAlerts from './MessageAlerts.svelte';
+  import BitlyAccessTokenModal from './BitlyAccessTokenModal.svelte';
   import { DEFAULT_WIN_CONDITION } from './defaults';
+  import { bitlyAccessTokenStore } from './stores/boardStore';
+  import { bitlyShortenUrl } from './shorten';
 
-  function handleCopyToClipboard(): void {
-    const phrasesText = document.getElementById('go-to-bingo-board') as HTMLAnchorElement;
-    const promise = navigator.clipboard.writeText(phrasesText.href);
+  function handleCopyToClipboard(url, message): void {
+    const promise = navigator.clipboard.writeText(url);
+    // TODO: Add error messageAlert, too!
     promise.then(
-      () => console.log('SUCCESS'),
+      () => (messageAlerts = [...messageAlerts, { message: message || 'Copied to clipboard' }]),
       () => console.log('FAILURE')
     );
   }
 
-  // TODO: Broken and no longer used, but could potentially be swapped for another shortener
-  function handleShorten(): void {
-    const urlToShorten = new URL(BINGO_URL, window.location.href).toString();
-    fetch(`https://url.pizza/shorten/${urlToShorten}`)
-      .then((response) => response.text())
-      .then((url) => {
-        SHORTENED_URL = url;
-        const promise = navigator.clipboard.writeText(url);
-        promise.then(
-          () => console.log('Copied ', url, ' to clipboard'),
-          () => console.log('Failed to copy ', url, ' to clipboard')
-        );
-      });
+  function genSeed(prefix): string {
+    let seed;
+    if (prefix) {
+      seed = `${prefix.replaceAll(/\s+/g, '_')}-${genRandomString()}`;
+    } else {
+      seed = genRandomString();
+    }
+    return seed;
   }
 
-  function genBingoUrl(): void {
-    const searchParams = new URLSearchParams();
-    PHRASES_STR.split('\n').forEach((phrase) => {
+  function genPhrases(): Array<string> {
+    let phrases: Array<string> = [];
+    FORM.phrases.split('\n').forEach((phrase) => {
       const trimmed: string = phrase.trim();
       if (trimmed.length) {
-        searchParams.append('c', trimmed);
+        phrases.push(trimmed);
       }
     });
-    searchParams.append('clear', '');
-    searchParams.append('goal', win_condition);
-    if (SEED_INPUT.length) {
-      const seed = `${SEED_INPUT.replaceAll(/\s+/g, '_')}-${genRandomString()}`;
-      searchParams.append('seed', seed);
-    }
-    BINGO_URL = './bingo.html?' + searchParams.toString();
+    return phrases;
   }
 
-  function copySeedUrlToClipboard(seed): void {
-    const promise = navigator.clipboard.writeText(makeSeedUrl(seed));
-    promise.then(
-      () => console.log('SUCCESS'),
-      () => console.log('FAILURE')
-    );
+  // TODO: optionally give seed?
+  function genBoardLink({ phrases, win_condition, board_name }): string {
+    const url = new URL('/bingo.html', window.location);
+    // const url = new URL('https://person-bingo.vercel.app/bingo.html');
+    phrases.split('\n').forEach((phrase) => {
+      const trimmed: string = phrase.trim();
+      if (trimmed.length) {
+        url.searchParams.append('c', trimmed);
+      }
+    });
+
+    url.searchParams.append('clear', true);
+    url.searchParams.append('goal', win_condition);
+    const seed = genSeed();
+    url.searchParams.append('seed', seed);
+    url.searchParams.append('name', board_name);
+
+    return url;
   }
 
-  function makeSeedUrl(seed) {
-    const searchParams = new URLSearchParams();
-    searchParams.append('seed', seed);
-    return BINGO_URL + `?${searchParams.toString()}`;
-  }
-
-  function handlePhrasesChange(): void {
-    const phrases_array = PHRASES_STR.split('\n').filter((phrase) => phrase.trim() !== '');
+  function handleFormChange(FORM): void {
+    const phrases_array = FORM.phrases.split('\n').filter((phrase) => phrase.trim() !== '');
     const unique_phrases = [...new Set(phrases_array)];
     // Set UNIQUE_ERROR state depending on whether we find duplicates or not
     UNIQUE_ERROR = phrases_array.length !== unique_phrases.length;
@@ -81,25 +83,23 @@
       PHRASES_LEFT = 0;
     }
     IS_VALID = NUM_PHRASES >= EXPECTED_PHRASES && !UNIQUE_ERROR;
-    genBingoUrl();
+    // Remove the previous URL promise (whether it existed or not)
+    SHORT_URL_PROMISE = null;
+    return genBoardLink(FORM);
   }
 
   function loadSuggestedPrompts(): void {
-    const phrases = PHRASES_STR.split('\n').map((phrase) => phrase.trim());
+    const phrases = FORM.phrases.split('\n').map((phrase) => phrase.trim());
     // Make sure we don't suggest something that's already being used!
     const unused_suggestions = shuffle(suggestions).filter((phrase) => !phrases.includes(phrase));
-    if (PHRASES_STR.trim().length) {
-      PHRASES_STR = [...phrases, ...unused_suggestions.slice(0, PHRASES_LEFT)].join('\n');
+    if (FORM.phrases.trim().length) {
+      FORM.phrases = [...phrases, ...unused_suggestions.slice(0, PHRASES_LEFT)].join('\n');
     } else {
-      PHRASES_STR = shuffle(suggestions).slice(0, PHRASES_LEFT).join('\n');
+      FORM.phrases = shuffle(suggestions).slice(0, PHRASES_LEFT).join('\n');
     }
-    handlePhrasesChange();
   }
 
   const FREE_SPACE = 'Free Space';
-  let PHRASES_STR: string = '';
-  let SEED_INPUT: string = '';
-  let SEED = '';
   let EXPECTED_PHRASES: number = 24;
   let NUM_PHRASES: number = 0;
   let PHRASES_LEFT: number = EXPECTED_PHRASES - NUM_PHRASES;
@@ -108,18 +108,53 @@
   }
   let IS_VALID: Boolean = false;
   let BINGO_URL: string = '';
-  let SHORTENED_URL: string = '';
   let UNIQUE_ERROR = false;
 
-  let win_condition = DEFAULT_WIN_CONDITION;
+  let ACCESS_TOKEN_MODAL_OPEN = false;
 
-  const prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-prompts')) || [];
-  if (prompts.length > 0) {
-    PHRASES_STR = prompts.filter((phrase) => phrase !== FREE_SPACE).join('\n');
-    handlePhrasesChange();
+  // TODO: Replace with store
+  const _prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-_prompts')) || [];
+  if (_prompts.length > 0) {
+    FORM.phrases = _prompts.filter((phrase) => phrase !== FREE_SPACE).join('\n');
   }
+
+  let FORM = {
+    win_condition: DEFAULT_WIN_CONDITION,
+    phrases: '',
+    board_name: '',
+  };
+
+  // Every time the form changes, update the generated Bingo URL
+  $: {
+    BINGO_URL = handleFormChange(FORM);
+  }
+
+  $: {
+    console.log('SHORT_URL', SHORT_URL);
+  }
+
+  $: {
+    console.log('SHORT_URL_PROMISE', SHORT_URL_PROMISE);
+  }
+
+  let SHORT_URL_PROMISE = null;
+  let SHORT_URL = null;
+
+  function handleUrlShortenRequest() {
+    if (!$bitlyAccessTokenStore) {
+      ACCESS_TOKEN_MODAL_OPEN = true;
+    }
+    if ($bitlyAccessTokenStore) {
+      return bitlyShortenUrl(BINGO_URL, $bitlyAccessTokenStore);
+    } else {
+      return null;
+    }
+  }
+  let messageAlerts = [];
+
 </script>
 
+<MessageAlerts messageAlerts="{messageAlerts}" />
 <Nav active="create" />
 <main role="main" class="container">
   <h1>Create Bingo</h1>
@@ -129,42 +164,44 @@
   </p>
 
   <form on:submit|preventDefault="{() => null}" id="wordsform" class="form">
-    <div class="form-group">
-      <label for="win-conditions">Win Condition (Board Pattern)</label>
-      <!-- svelte-ignore a11y-no-onchange -->
-      <select
-        class="form-control"
-        name="win-conditions"
-        id="win-conditions"
-        bind:value="{win_condition}"
-        on:change="{() => genBingoUrl()}"
-      >
-        <option value="line">Line (horizontal, vertical, OR diagonal)</option>
-        <option value="four-corners">Four Corners</option>
-        <option value="whole-board">Whole Board</option>
-      </select>
-      <label for="seed-text">Seed</label>
-      <input
-        name="seed"
-        bind:value="{SEED_INPUT}"
-        on:input="{genBingoUrl}"
-        placeholder="Enter seed (optional). This allows you to give everyone the same board layout."
-        class="form-control"
-        id="seed-text"
-      />
+    <div class="row">
+      <div class="form-group col">
+        <label for="win-conditions">Win Condition (Board Pattern)</label>
+        <select
+          class="form-select"
+          name="win-conditions"
+          id="win-conditions"
+          bind:value="{FORM.win_condition}"
+        >
+          <option value="line">Line (horizontal, vertical, OR diagonal)</option>
+          <option value="four-corners">Four Corners</option>
+          <option value="whole-board">Whole Board</option>
+        </select>
+      </div>
+
+      <div class="form-group col">
+        <label for="seed-text">Board Name (optional)</label>
+        <input
+          name="board-name"
+          bind:value="{FORM.board_name}"
+          placeholder="Enter board name (optional)"
+          class="form-control"
+          id="board-name"
+        />
+      </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group mt-2">
       <label for="phrases-text">Prompts</label>
       <textarea
         name="phrases"
         form="wordsform"
-        bind:value="{PHRASES_STR}"
-        on:input="{handlePhrasesChange}"
+        bind:value="{FORM.phrases}"
         placeholder="Enter phrases, one per line"
         class="form-control"
         class:is-invalid="{UNIQUE_ERROR}"
-        id="phrases-text"></textarea>
+        id="phrases-text"
+        rows="5"></textarea>
       {#if UNIQUE_ERROR}
         <small id="phrases-help" class="text-danger"> All lines must be unique! </small>
       {/if}
@@ -172,24 +209,53 @@
     <br />
     <div>
       {#if IS_VALID}
-        <a class="btn btn-primary" href="{BINGO_URL}" id="go-to-bingo-board">Go to Bingo Board</a>
-        <button class="btn btn-info" on:click="{handleCopyToClipboard}">
-          📋 Copy link to clipboard 📋
-        </button>
+        <div class="d-flex flex-row align-items-center">
+          <a
+            class="btn btn-primary me-2"
+            on:click="{() => handleCopyToClipboard(BINGO_URL, 'Copied full URL to clipboard')}"
+            href="{BINGO_URL}">Go to Board</a
+          >
+          {#if SHORT_URL_PROMISE}
+            {#await SHORT_URL_PROMISE}
+              <CircleLoading color="black" size="2" unit="em" duration="1s" />
+            {:then data}
+              {#if data.link}
+                <a class="btn btn-info me-2" href="{data.link}">Short URL</a>
+                <button
+                  class="btn btn-info btn-outline"
+                  on:click="{() => handleCopyToClipboard(data.link)}"
+                >
+                  📋
+                </button>
+              {:else}
+                <span>Error: {data.message}</span>
+              {/if}
+            {:catch error}
+              <span>Error {JSON.stringify(error.message)}</span>
+            {/await}
+          {:else}
+            <button
+              class="btn btn-info me-2"
+              on:click="{() => (SHORT_URL_PROMISE = handleUrlShortenRequest())}"
+            >
+              Generate Short URL
+            </button>
+          {/if}
+        </div>
       {:else}
         <div class="d-flex flex-row align-items-center">
-          <div class="p-2">
+          <div class="me-2">
             <button class="btn btn-secondary" on:click="{loadSuggestedPrompts}">
               Fill Suggested Prompts
             </button>
           </div>
-          <div class="p-2">
+          <div class="me-2">
             <div>
               You've entered
               <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">
                 {NUM_PHRASES}/{EXPECTED_PHRASES}
               </span>
-              required phrases. Use this button to fill in the
+              required phrases. Either enter more above, or use this button to fill in the
               <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">{PHRASES_LEFT}</span>
               remaining.
             </div>
@@ -199,3 +265,9 @@
     </div>
   </form>
 </main>
+
+<BitlyAccessTokenModal
+  isOpen="{ACCESS_TOKEN_MODAL_OPEN}"
+  toggleModal="{() => (ACCESS_TOKEN_MODAL_OPEN = !ACCESS_TOKEN_MODAL_OPEN)}"
+  onSubmit="{() => (SHORT_URL_PROMISE = handleUrlShortenRequest())}"
+/>

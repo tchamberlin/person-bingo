@@ -8,5 +8,6 @@ export const promptsStore = initLocalStorageStore('prompts', []);
 export const seedStore = initLocalStorageStore('seed');
 export const winConditionStore = initLocalStorageStore('winCondition', DEFAULT_WIN_CONDITION);
 export const victoryStore = initLocalStorageStore('victory', false);
-export const originalBoardUrlStore = initLocalStorageStore('originalBoardUrl');
 export const allowShuffleStore = initLocalStorageStore('allowShuffle');
+export const bitlyAccessTokenStore = initLocalStorageStore('bitlyAccessToken');
+export const boardNameStore = initLocalStorageStore('boardName', 'Bingo');

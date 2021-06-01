@@ -39,6 +39,7 @@
   export let genBoard: () => void;
   export let clearBoard: () => void;
   export let allowShuffle: boolean;
+  export let boardName: string;
   // TODO Type rules
   export let rule;
   export let enableConfetti = false;
@@ -56,6 +57,11 @@
   <div class="row align-items-center">
     <div class="col-xl-6 p-0">
       <div class="d-flex flex-row align-items-center">
+        {#if boardName}
+          <div class="pe-4">
+            <h1>{boardName}</h1>
+          </div>
+        {/if}
         <div class="pe-2">
           <button
             on:click="{handleClearBoard}"

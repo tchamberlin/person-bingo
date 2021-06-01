@@ -9,7 +9,7 @@
     promptsStore,
     winConditionStore,
     victoryStore,
-    originalBoardUrlStore,
+    boardNameStore,
     allowShuffleStore,
   } from './stores/boardStore';
 
@@ -94,6 +94,7 @@
     WIN_CONDITION: 'goal',
     SEED: 'seed',
     CLEAR: 'clear',
+    BOARD_NAME: 'name',
   };
 
   const STATE = {
@@ -163,10 +164,14 @@
       stopConfetti();
     }
   }
-  console.log('$originalBoardUrlStore', $originalBoardUrlStore);
   if (STATE.DO_CLEAR_DATA || url.search.length) {
     window.history.replaceState({}, '', url.pathname);
     STATE.DO_CLEAR_DATA = false;
+  }
+
+  let boardNameParam = url.searchParams.get(PARAM_KEYS.BOARD_NAME);
+  if (boardNameParam?.length) {
+    $boardNameStore = boardNameParam;
   }
 
 </script>
@@ -175,6 +180,7 @@
 <main role="main" class="container">
   {#if $boardStore?.length}
     <BoardToolbar
+      boardName="{$boardNameStore}"
       rule="{rule}"
       clearBoard="{clearBoard}"
       genBoard="{genBoard}"
@@ -191,7 +197,7 @@
     />
   {:else}
     <div>
-      <h1>Bingo</h1>
+      <h1>{$boardNameStore}</h1>
       <p>
         Boards must be at least {numCellsInBoard - 1} <strong>unique</strong> prompts (got only {$boardStore.length})!
         You've probably used an invalid URL.

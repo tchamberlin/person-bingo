@@ -1,6 +1,6 @@
 {
   "name": "person-bingo",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -41,6 +41,7 @@
     "npm-check": "^5.9.2",
     "seedrandom": "^3.0.5",
     "sirv-cli": "^1.0.0",
+    "svelte-loading-spinners": "^0.1.5",
     "sveltestrap": "^5.0.6"
   },
   "prettier": {
