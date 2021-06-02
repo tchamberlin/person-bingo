@@ -2,6 +2,7 @@
   import suggestions from './suggested_prompts';
   import { genRandomString, chunk, shuffle } from './utils.ts';
   import { RULES, checkBoard } from './rules.ts';
+  import { PARAM_KEYS } from './paramKeys';
   import { DEFAULT_FREE_SPACE, DEFAULT_BINGO_LETTERS, DEFAULT_WIN_CONDITION } from './defaults';
   import {
     boardStore,
@@ -11,6 +12,7 @@
     victoryStore,
     boardNameStore,
     allowShuffleStore,
+    maxDuplicatesStore,
   } from './stores/boardStore';
 
   import Board from './Board.svelte';
@@ -89,14 +91,6 @@
     $boardStore = chunk(newBoard.slice(0, numCellsInBoard), DEFAULT_BINGO_LETTERS.length);
   }
 
-  const PARAM_KEYS = {
-    CELL: 'c',
-    WIN_CONDITION: 'goal',
-    SEED: 'seed',
-    CLEAR: 'clear',
-    BOARD_NAME: 'name',
-  };
-
   const STATE = {
     WIN_MODAL_OPEN: false,
     RULES_MODAL_OPEN: false,
@@ -149,7 +143,7 @@
     genBoard();
   } else {
     console.log('Found board in localStorage (rechecking)', $boardStore);
-    $victoryStore = checkBoard($boardStore, $winConditionStore);
+    $victoryStore = checkBoard($boardStore, $winConditionStore, $maxDuplicatesStore);
   }
 
   let userIsSureTheyWantToSubmit = false;
@@ -172,6 +166,10 @@
   let boardNameParam = url.searchParams.get(PARAM_KEYS.BOARD_NAME);
   if (boardNameParam?.length) {
     $boardNameStore = boardNameParam;
+  }
+  let maxDuplicatesParam = url.searchParams.get(PARAM_KEYS.MAX_DUPLICATES);
+  if (maxDuplicatesParam !== null) {
+    $maxDuplicatesStore = maxDuplicatesParam;
   }
 
 </script>

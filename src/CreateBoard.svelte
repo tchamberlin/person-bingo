@@ -12,6 +12,7 @@
 
 <script lang="ts">
   import { Circle as CircleLoading } from 'svelte-loading-spinners';
+  import { PARAM_KEYS } from './paramKeys';
 
   import suggestions from './suggested_prompts';
   import { shuffle, genRandomString } from './utils';
@@ -55,7 +56,7 @@
   }
 
   // TODO: optionally give seed?
-  function genBoardLink({ phrases, win_condition, board_name }): string {
+  function genBoardLink({ phrases, win_condition, board_name, max_duplicates }): string {
     const url = new URL('/bingo.html', window.location);
     // const url = new URL('https://person-bingo.vercel.app/bingo.html');
     phrases.split('\n').forEach((phrase) => {
@@ -65,11 +66,12 @@
       }
     });
 
-    url.searchParams.append('clear', true);
-    url.searchParams.append('goal', win_condition);
+    url.searchParams.append(PARAM_KEYS.CLEAR, true);
+    url.searchParams.append(PARAM_KEYS.GOAL, win_condition);
     const seed = genSeed();
-    url.searchParams.append('seed', seed);
-    url.searchParams.append('name', board_name);
+    url.searchParams.append(PARAM_KEYS.SEED, seed);
+    url.searchParams.append(PARAM_KEYS.NAME, board_name);
+    url.searchParams.append(PARAM_KEYS.MAX_DUPLICATES, max_duplicates);
 
     return url;
   }
@@ -124,6 +126,7 @@
     win_condition: DEFAULT_WIN_CONDITION,
     phrases: '',
     board_name: '',
+    max_duplicates: 1,
   };
 
   // Every time the form changes, update the generated Bingo URL
@@ -179,14 +182,25 @@
         </div>
       </div>
 
-      <div class="form-group col-sm-6">
-        <label for="seed-text">Board Name (optional)</label>
+      <div class="form-group col-sm-3">
+        <label for="board-name">Board Name (optional)</label>
         <input
           name="board-name"
           bind:value="{FORM.board_name}"
           placeholder="Enter board name (optional)"
           class="form-control"
           id="board-name"
+        />
+      </div>
+
+      <div class="form-group col-sm-3">
+        <label for="max-duplicates">Max Duplicates (optional)</label>
+        <input
+          name="max-duplicates"
+          bind:value="{FORM.max_duplicates}"
+          title="The number of instances of each name that are allowed on the board"
+          class="form-control"
+          id="max-duplicates"
         />
       </div>
     </div>

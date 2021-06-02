@@ -60,13 +60,14 @@
     width: 1%;
   }
   table .w-20 {
+    /* (100-1)/5 */
     width: 19.8%;
   }
 
 </style>
 
 <script lang="ts">
-  import { boardStore, victoryStore } from './stores/boardStore';
+  import { boardStore, victoryStore, maxDuplicatesStore } from './stores/boardStore';
   import { checkBoard } from './rules';
   import { DEFAULT_FREE_SPACE, DEFAULT_BINGO_LETTERS, DEFAULT_WIN_CONDITION } from './defaults';
   import type { Board, Row, Cell } from './types';
@@ -145,7 +146,7 @@
       $boardStore[row][col].state.found = nowFound;
     }
     $boardStore[row][col].state.active = false;
-    $victoryStore = checkBoard($boardStore, winCondition);
+    $victoryStore = checkBoard($boardStore, winCondition, $maxDuplicatesStore);
   }
 
 </script>

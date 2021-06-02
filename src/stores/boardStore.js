@@ -11,3 +11,4 @@ export const victoryStore = initLocalStorageStore('victory', false);
 export const allowShuffleStore = initLocalStorageStore('allowShuffle');
 export const bitlyAccessTokenStore = initLocalStorageStore('bitlyAccessToken');
 export const boardNameStore = initLocalStorageStore('boardName', 'Bingo');
+export const maxDuplicatesStore = initLocalStorageStore('maxDuplicates');

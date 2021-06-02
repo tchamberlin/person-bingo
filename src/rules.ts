@@ -160,7 +160,17 @@ function exampleWholeBoardWin(): Array<Array<boolean>> {
   return example;
 }
 
-export function checkBoard(board: Board, winCondition: string): boolean {
+function checkDuplicates(board: Board, allValues: Array<string>, maxDuplicates = 1) {
+  board.forEach((row: Row, ri: number) =>
+    row.forEach((cell: Cell, ci: number) => {
+      board[ri][ci].state.duplicate =
+        allValues.filter((value) => value.trim().toLowerCase() === cell.value.trim().toLowerCase())
+          .length > maxDuplicates;
+    })
+  );
+}
+
+export function checkBoard(board: Board, winCondition: string, maxDuplicates: number): boolean {
   console.debug('checkBoard', board, winCondition);
   const allValues = [];
   board.forEach((row: Row) =>
@@ -172,13 +182,7 @@ export function checkBoard(board: Board, winCondition: string): boolean {
   );
 
   // Check duplicates first
-  board.forEach((row: Row, ri: number) =>
-    row.forEach((cell: Cell, ci: number) => {
-      board[ri][ci].state.duplicate =
-        allValues.filter((value) => value.trim().toLowerCase() === cell.value.trim().toLowerCase())
-          .length > 1;
-    })
-  );
+  checkDuplicates(board, allValues, maxDuplicates);
 
   const rule = RULES[winCondition] || RULES[DEFAULT_WIN_CONDITION];
   const wonCells = rule.function(board);

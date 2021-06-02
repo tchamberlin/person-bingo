@@ -6,8 +6,8 @@ const initLocalStorageStore = (key, defaultValue) => {
   }
   const store = writable(JSON.parse(localStorage.getItem(key)) || defaultValue);
   store.subscribe((value) => {
-    console.debug(`Wrote to ${key} store:`, value);
     localStorage.setItem(key, JSON.stringify(value));
+    console.debug(`Wrote to ${key} store:`, value);
   });
   return store;
 };
