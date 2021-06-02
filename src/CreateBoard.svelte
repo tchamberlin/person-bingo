@@ -67,7 +67,7 @@
     });
 
     url.searchParams.append(PARAM_KEYS.CLEAR, true);
-    url.searchParams.append(PARAM_KEYS.GOAL, win_condition);
+    url.searchParams.append(PARAM_KEYS.WIN_CONDITION, win_condition);
     const seed = genSeed();
     url.searchParams.append(PARAM_KEYS.SEED, seed);
     url.searchParams.append(PARAM_KEYS.NAME, board_name);
@@ -89,6 +89,7 @@
     IS_VALID = NUM_PHRASES >= EXPECTED_PHRASES && !UNIQUE_ERROR;
     // Remove the previous URL promise (whether it existed or not)
     SHORT_URL_PROMISE = null;
+    console.log('FORM', FORM);
     return genBoardLink(FORM);
   }
 
@@ -197,6 +198,8 @@
         <label for="max-duplicates">Max Duplicates (optional)</label>
         <input
           name="max-duplicates"
+          type="number"
+          min="1"
           bind:value="{FORM.max_duplicates}"
           title="The number of instances of each name that are allowed on the board"
           class="form-control"

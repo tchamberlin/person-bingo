@@ -89,6 +89,7 @@
     const newBoard = [];
     $boardStore.forEach((row) => row.forEach(({ title }) => newBoard.push(genCell(title))));
     $boardStore = chunk(newBoard.slice(0, numCellsInBoard), DEFAULT_BINGO_LETTERS.length);
+    stopConfetti();
   }
 
   const STATE = {
@@ -179,6 +180,7 @@
   {#if $boardStore?.length}
     <BoardToolbar
       boardName="{$boardNameStore}"
+      maxDuplicates="{$maxDuplicatesStore}"
       rule="{rule}"
       clearBoard="{clearBoard}"
       genBoard="{genBoard}"

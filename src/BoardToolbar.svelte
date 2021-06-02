@@ -43,6 +43,7 @@
   // TODO Type rules
   export let rule;
   export let enableConfetti = false;
+  export let maxDuplicates: number;
   let confettiMultiplier = 1;
   export let toggleConfetti: () => void;
   export let confettiIsActive: () => bool;
@@ -119,7 +120,7 @@
                 on:click="{() => {
                   CONFETTI = toggleConfetti({ particleCount: 100 * confettiMultiplier });
                 }}"
-                >{#each [...Array(confettiMultiplier)] as _}🎉{/each}</button
+                >{#each [...Array(confettiMultiplier)] as _}Toggle 🎉{/each}</button
               >
               <button
                 type="button"
@@ -137,7 +138,9 @@
       <div class="d-flex flex-row justify-content-end align-items-center">
         <div class="pe-1">
           <div>
-            <small>Find unique people that match the prompt in each cell</small>
+            <small
+              >Each unique name can occur <strong>{maxDuplicates}</strong> time on the board</small
+            >
           </div>
           <div>
             <small>After you <strong>{rule.blurb}</strong>, you win!</small>

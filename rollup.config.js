@@ -84,7 +84,7 @@ const genBundleConfig = (name) => ({
     // browser on changes when not in production
     !production && livereload('public'),
     // Remove _some_ console statements in production
-    production && strip({ functions: ['console.debug'] }),
+    production && strip({ functions: ['console.debug', 'console.log'] }),
     // If we're building for production (npm run build
     // instead of npm run dev), minify
     production && terser(),

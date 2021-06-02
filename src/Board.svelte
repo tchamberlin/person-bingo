@@ -17,6 +17,7 @@
   .table th {
     padding: 0.5rem;
   }
+
   .found {
     /* sky blue */
     background-color: #75bbfd !important;
@@ -83,10 +84,10 @@
       cssClass = 'active';
     } else if (cell.state.immediateDuplicate) {
       cssClass = 'immediate_duplicate';
-    } else if (cell.state.duplicate) {
-      cssClass = 'duplicate';
     } else if (cell.state.win) {
       cssClass = 'win';
+    } else if (cell.state.duplicate) {
+      cssClass = 'duplicate';
     } else if (cell.state.found) {
       cssClass = 'found';
     } else {

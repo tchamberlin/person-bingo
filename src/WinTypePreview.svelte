@@ -3,8 +3,8 @@
     /* We want the borders to be exactly 1px, so we don't get weird aliasing */
     /*csslint box-model: false*/
     border: 1px solid black;
-    height: 5px;
-    width: 5px;
+    height: 6px;
+    width: 6px;
   }
   .filled {
     background-color: #75bbfd;

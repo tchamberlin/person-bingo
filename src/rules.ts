@@ -2,8 +2,47 @@ import { DEFAULT_WIN_CONDITION } from './defaults';
 import type { Board, Row, Cell } from './types';
 
 function cellIsValid(cell) {
-  return cell.state.found && !cell.state.duplicate;
+  return cell.state.found;
 }
+
+const genSimpleRule = (name, shape) => ({
+  name: name,
+  blurb: `complete the given "${name.toLowerCase()}" shape exactly`,
+  function: (board: Board) => checkSimple(board, shape),
+  examples: [() => shape],
+});
+
+const benchShape = [
+  [0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1],
+  [0, 1, 0, 1, 0],
+  [0, 1, 0, 1, 0],
+];
+
+const anchorShape = [
+  [1, 1, 1, 1, 1],
+  [0, 0, 1, 0, 0],
+  [0, 0, 1, 0, 0],
+  [1, 0, 1, 0, 1],
+  [0, 1, 1, 1, 0],
+];
+
+const bullseyeShape = [
+  [0, 1, 1, 1, 0],
+  [1, 0, 0, 0, 1],
+  [1, 0, 1, 0, 1],
+  [1, 0, 0, 0, 1],
+  [0, 1, 1, 1, 0],
+];
+
+const heartShape = [
+  [0, 1, 0, 1, 0],
+  [1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1],
+  [0, 1, 1, 1, 0],
+  [0, 0, 1, 0, 0],
+];
 
 export const RULES = {
   line: {
@@ -24,6 +63,10 @@ export const RULES = {
     function: checkWholeBoardWin,
     examples: [exampleWholeBoardWin],
   },
+  bench: genSimpleRule('Bench', benchShape),
+  anchor: genSimpleRule('Anchor', anchorShape),
+  bullseye: genSimpleRule('Bullseye', bullseyeShape),
+  heart: genSimpleRule('Heart', heartShape),
 };
 
 function checkRowWin(board: Board): Array<string> {
@@ -160,18 +203,43 @@ function exampleWholeBoardWin(): Array<Array<boolean>> {
   return example;
 }
 
-function checkDuplicates(board: Board, allValues: Array<string>, maxDuplicates = 1) {
+function checkSimple(board: Board, shape: Array<Array<number>>): Array<string> {
+  let wonCells = [];
+  let won = true;
   board.forEach((row: Row, ri: number) =>
     row.forEach((cell: Cell, ci: number) => {
-      board[ri][ci].state.duplicate =
-        allValues.filter((value) => value.trim().toLowerCase() === cell.value.trim().toLowerCase())
-          .length > maxDuplicates;
+      if (shape[ri][ci]) {
+        if (cellIsValid(board[ri][ci])) {
+          wonCells.push(`${ri}x${ci}`);
+        } else {
+          // If ANY aren't found that should have been, we don't have ANY won cells
+          won = false;
+        }
+      }
+    })
+  );
+  if (won) {
+    return wonCells;
+  } else {
+    return [];
+  }
+}
+
+function checkDuplicates(board: Board, allValues: Array<string>, maxDuplicates = 1) {
+  if (!maxDuplicates || maxDuplicates < 1) {
+    maxDuplicates = 1;
+  }
+  board.forEach((row: Row, ri: number) =>
+    row.forEach((cell: Cell, ci: number) => {
+      const duplicates = allValues.filter(
+        (value) => value.trim().toLowerCase() === cell.value.trim().toLowerCase()
+      );
+      board[ri][ci].state.duplicate = duplicates.length > maxDuplicates;
     })
   );
 }
 
 export function checkBoard(board: Board, winCondition: string, maxDuplicates: number): boolean {
-  console.debug('checkBoard', board, winCondition);
   const allValues = [];
   board.forEach((row: Row) =>
     row.forEach((cell: Cell) => {
@@ -181,17 +249,52 @@ export function checkBoard(board: Board, winCondition: string, maxDuplicates: nu
     })
   );
 
-  // Check duplicates first
+  // Check duplicates for ALL cells first
   checkDuplicates(board, allValues, maxDuplicates);
 
   const rule = RULES[winCondition] || RULES[DEFAULT_WIN_CONDITION];
-  const wonCells = rule.function(board);
+  // The rule.function will give us cell indices, e.g. 0x0, so we map these to cells
+  const wonCellsIndices = rule.function(board);
+  const wonCells = wonCellsIndices.map((indices) => {
+    let [ri, ci] = indices.split('x');
+    return board[ri][ci];
+  });
 
+  // We have POTENTIALLY won if there are any won cells
+  let haveWon = Boolean(wonCells.length);
+  // Now walk through the board and check every won cell for duplicates. But ONLY duplicates
+  // within the won cells! These are the only ones that will stop a win
   board.forEach((row: Row, ri: number) =>
-    row.forEach((_, ci: number) => {
-      board[ri][ci].state.win = wonCells.indexOf(`${ri}x${ci}`) !== -1;
+    row.forEach((cell: Cell, ci: number) => {
+      if (wonCellsIndices.indexOf(`${ri}x${ci}`) !== -1) {
+        const duplicates = wonCells.filter(
+          ({ value }) => value.trim().toLowerCase() === cell.value.trim().toLowerCase()
+        );
+        if (duplicates.length > maxDuplicates) {
+          haveWon = false;
+        }
+      }
     })
   );
 
-  return Boolean(wonCells.length);
+  // Finally, if we've still won after considering duplicates, mark each won cell
+  if (haveWon) {
+    board.forEach((row: Row, ri: number) =>
+      row.forEach((cell: Cell, ci: number) => {
+        // If the current cell is "won"
+        if (wonCellsIndices.indexOf(`${ri}x${ci}`) !== -1) {
+          board[ri][ci].state.win = true;
+        }
+      })
+    );
+    // ...or mark everything lost
+  } else {
+    board.forEach((row: Row, ri: number) =>
+      row.forEach((cell: Cell, ci: number) => {
+        board[ri][ci].state.win = false;
+      })
+    );
+  }
+
+  return haveWon;
 }
