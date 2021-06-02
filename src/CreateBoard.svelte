@@ -131,14 +131,6 @@
     BINGO_URL = handleFormChange(FORM);
   }
 
-  $: {
-    console.log('SHORT_URL', SHORT_URL);
-  }
-
-  $: {
-    console.log('SHORT_URL_PROMISE', SHORT_URL_PROMISE);
-  }
-
   let SHORT_URL_PROMISE = null;
   let SHORT_URL = null;
 
@@ -170,7 +162,7 @@
 
   <form on:submit|preventDefault="{() => null}" id="wordsform" class="form">
     <div class="row">
-      <div class="form-group col">
+      <div class="form-group col-sm-6">
         <label for="win-conditions">Win Condition (Board Pattern)</label>
         <div class="d-flex flex-row align-items-center">
           <select
@@ -187,7 +179,7 @@
         </div>
       </div>
 
-      <div class="form-group col">
+      <div class="form-group col-sm-6">
         <label for="seed-text">Board Name (optional)</label>
         <input
           name="board-name"
@@ -251,22 +243,18 @@
           {/if}
         </div>
       {:else}
-        <div class="d-flex flex-row align-items-center">
+        <div class="d-flex flex-row flex-wrap align-items-center">
+          <button class="btn btn-secondary me-2" on:click="{loadSuggestedPrompts}">
+            Fill Suggested Prompts
+          </button>
           <div class="me-2">
-            <button class="btn btn-secondary" on:click="{loadSuggestedPrompts}">
-              Fill Suggested Prompts
-            </button>
-          </div>
-          <div class="me-2">
-            <div>
-              You've entered
-              <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">
-                {NUM_PHRASES}/{EXPECTED_PHRASES}
-              </span>
-              required phrases. Either enter more above, or use this button to fill in the
-              <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">{PHRASES_LEFT}</span>
-              remaining.
-            </div>
+            You've entered
+            <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">
+              {NUM_PHRASES}/{EXPECTED_PHRASES}
+            </span>
+            required phrases. Either enter more above, or use this button to fill in the
+            <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">{PHRASES_LEFT}</span>
+            remaining.
           </div>
         </div>
       {/if}
