@@ -16,11 +16,13 @@
   import suggestions from './suggested_prompts';
   import { shuffle, genRandomString } from './utils';
   import Nav from './Nav.svelte';
+  import WinTypePreview from './WinTypePreview.svelte';
   import MessageAlerts from './MessageAlerts.svelte';
   import BitlyAccessTokenModal from './BitlyAccessTokenModal.svelte';
   import { DEFAULT_WIN_CONDITION } from './defaults';
   import { bitlyAccessTokenStore } from './stores/boardStore';
   import { bitlyShortenUrl } from './shorten';
+  import { RULES } from './rules';
 
   function handleCopyToClipboard(url, message): void {
     const promise = navigator.clipboard.writeText(url);
@@ -152,6 +154,9 @@
   }
   let messageAlerts = [];
 
+  // Convert RULES into an array for easier parsing
+  const rulesArray = Object.entries(RULES).map(([key, rule]) => ({ value: key, ...rule }));
+
 </script>
 
 <MessageAlerts messageAlerts="{messageAlerts}" />
@@ -167,16 +172,19 @@
     <div class="row">
       <div class="form-group col">
         <label for="win-conditions">Win Condition (Board Pattern)</label>
-        <select
-          class="form-select"
-          name="win-conditions"
-          id="win-conditions"
-          bind:value="{FORM.win_condition}"
-        >
-          <option value="line">Line (horizontal, vertical, OR diagonal)</option>
-          <option value="four-corners">Four Corners</option>
-          <option value="whole-board">Whole Board</option>
-        </select>
+        <div class="d-flex flex-row align-items-center">
+          <select
+            class="form-select"
+            name="win-conditions"
+            id="win-conditions"
+            bind:value="{FORM.win_condition}"
+          >
+            {#each rulesArray as { value, name }}
+              <option value="{value}">{name}</option>
+            {/each}
+          </select>
+          <WinTypePreview rule="{RULES[FORM.win_condition]}" />
+        </div>
       </div>
 
       <div class="form-group col">

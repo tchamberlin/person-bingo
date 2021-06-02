@@ -9,19 +9,24 @@
   .filled {
     background-color: #75bbfd;
   }
+  .noshrink {
+    flex-shrink: 0;
+  }
 
 </style>
 
 <script lang="ts">
   export let rule;
   // Execute all of the example-creation functions to get the grids
-  let exampleGrids = rule.examples.map((exampleFunc) => exampleFunc());
+  let exampleGrids;
+  // Update exampleGrids when rule changes, otherwise a re-render won't be triggered
+  $: exampleGrids = rule.examples.map((exampleFunc) => exampleFunc());
 
 </script>
 
-<div class="d-flex flex-row align-items-center">
+<div class="d-flex flex-row align-items-center noshrink">
   {#each exampleGrids as grid}
-    <div class="ps-2">
+    <div class="ms-2">
       <table>
         {#each grid as row}
           <tr>
