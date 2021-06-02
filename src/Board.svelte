@@ -22,35 +22,35 @@
     /* sky blue */
     background-color: #75bbfd !important;
     color: black;
-    cursor: default;
+    cursor: pointer;
     transition: 0.5s;
   }
   .immediate_duplicate {
     /* pale orange */
     background-color: #ffa756 !important;
     color: black;
-    cursor: default;
+    cursor: pointer;
     transition: 0.5s;
   }
   .duplicate {
     /* wheat */
     background-color: #fbdd7e !important;
     color: black;
-    cursor: default;
+    cursor: pointer;
     transition: 0.5s;
   }
   .active {
     /* pale blue */
     background-color: #d0fefe !important;
     color: black;
-    cursor: default;
+    cursor: pointer;
     transition: 0.5s;
   }
   .win {
     /* pale green */
     background-color: #c7fdb5 !important;
     color: black;
-    cursor: default;
+    cursor: pointer;
     transition: 0.5s;
   }
   .free-space {

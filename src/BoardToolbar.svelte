@@ -143,7 +143,7 @@
             >
           </div>
           <div>
-            <small>After you <strong>{rule.blurb}</strong>, you win!</small>
+            <small>Goal: <strong>{rule.blurb}</strong></small>
           </div>
         </div>
         <div class="ps-1">
