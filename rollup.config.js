@@ -45,7 +45,7 @@ const genBundleConfig = (name) => ({
   plugins: [
     copy({
       targets: [
-        { src: 'node_modules/bootstrap/dist/css/bootstrap.min.css*', dest: 'public/build/' },
+        { src: 'node_modules/bootswatch/dist/flatly/bootstrap.min.css*', dest: 'public/build/' },
       ],
     }),
     versionInjector(),

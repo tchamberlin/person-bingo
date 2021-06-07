@@ -1,4 +1,5 @@
 import seedrandom from 'seedrandom';
+import { PARAM_KEYS } from './paramKeys';
 
 export function genRandomString(length = 8): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -21,7 +22,7 @@ export function chunk(arr: Array<any>, len: number): Array<any> {
 }
 
 // Adapted from https://stackoverflow.com/a/6274398/1883424
-export function shuffle(array: Array<any>, seed: string): Array<any> {
+export function shuffle(array: Array<any>, seed?: string): Array<any> {
   let random;
   if (seed) {
     console.log('Shuffling deterministically from seed', seed);
@@ -50,4 +51,38 @@ export function shuffle(array: Array<any>, seed: string): Array<any> {
 
   console.log('SHUFFLE', array, 'to', _array);
   return _array;
+}
+
+export function genSeed(prefix?: string): string {
+  let seed: string;
+  if (prefix) {
+    seed = `${prefix.replaceAll(/\s+/g, '_')}-${genRandomString()}`;
+  } else {
+    seed = genRandomString();
+  }
+  return seed;
+}
+
+// TODO: optionally give seed?
+export function genBoardUrl({ phrases, win_condition, board_name, max_duplicates, seed }): URL {
+  if (typeof seed === 'undefined') {
+    seed = genSeed();
+  }
+
+  const url = new URL('/bingo.html', window.location.toString());
+  // const url = new URL('https://person-bingo.vercel.app/bingo.html');
+  phrases.split('\n').forEach((phrase: string) => {
+    const trimmed: string = phrase.trim();
+    if (trimmed.length) {
+      url.searchParams.append('c', trimmed);
+    }
+  });
+
+  url.searchParams.append(PARAM_KEYS.CLEAR, 'true');
+  url.searchParams.append(PARAM_KEYS.WIN_CONDITION, win_condition);
+  url.searchParams.append(PARAM_KEYS.SEED, seed);
+  url.searchParams.append(PARAM_KEYS.BOARD_NAME, board_name);
+  url.searchParams.append(PARAM_KEYS.MAX_DUPLICATES, max_duplicates);
+
+  return url;
 }

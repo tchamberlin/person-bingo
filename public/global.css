@@ -5,8 +5,10 @@ html {
 
 body {
   line-height: 1.25rem;
-  margin-top: 30px;
-  /*margin-bottom: 30px;*/
+  /* Not needed if using sticky-top for navbar */
+  /* margin-top: 30px; */
+  /* Not needed unless using footer */
+  /* margin-bottom: 30px; */
 }
 
 @media (max-width: 1025px) {
@@ -14,4 +16,9 @@ body {
     max-width: 100%;
     padding-top: 1em;
   }
+}
+
+.noshrink {
+  flex-shrink: 0;
+  flex-grow: 0;
 }

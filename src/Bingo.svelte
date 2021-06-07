@@ -1,7 +1,7 @@
 <script lang="ts">
-  import suggestions from './suggested_prompts';
-  import { genRandomString, chunk, shuffle } from './utils.ts';
-  import { RULES, checkBoard } from './rules.ts';
+  import { genRandomString, chunk, shuffle, genBoardUrl } from './utils';
+  import { RULES, checkBoard } from './rules';
+  import type { Cell } from './types';
   import { PARAM_KEYS } from './paramKeys';
   import { DEFAULT_FREE_SPACE, DEFAULT_BINGO_LETTERS, DEFAULT_WIN_CONDITION } from './defaults';
   import {
@@ -17,6 +17,7 @@
 
   import Board from './Board.svelte';
   import BoardToolbar from './BoardToolbar.svelte';
+  import MessageAlerts from './MessageAlerts.svelte';
   import Nav from './Nav.svelte';
   import RulesModal from './RulesModal.svelte';
   import WinModal from './WinModal.svelte';
@@ -30,21 +31,14 @@
 
   const numCellsInBoard = DEFAULT_BINGO_LETTERS.length ** 2;
 
-  // TODO: consolidate with CreateBoard.genBingoUrl
-  function genBingoUrl() {
-    const searchParams = new URLSearchParams();
-    $promptsStore.forEach((phrase) => {
-      const trimmed: string = phrase.trim();
-      if (trimmed.length) {
-        searchParams.append(PARAM_KEYS.CELL, trimmed);
-      }
-    });
-    searchParams.append(PARAM_KEYS.CLEAR, '');
-    searchParams.append(PARAM_KEYS.WIN_CONDITION, $winConditionStore);
-    searchParams.append(PARAM_KEYS.SEED, $seedStore);
-    const foo = './bingo.html?' + searchParams.toString();
-    console.log('genBingoUrl', foo);
-    return foo;
+  // TODO: Consolidate
+  function handleCopyToClipboard(text: string, message?: string): void {
+    const promise = navigator.clipboard.writeText(text);
+    // TODO: Add error messageAlert, too!
+    promise.then(
+      () => (messageAlerts = [...messageAlerts, { message: message || 'Copied to clipboard' }]),
+      () => console.log('FAILURE')
+    );
   }
 
   function genCell(title) {
@@ -69,7 +63,7 @@
 
     if ($promptsStore.length === 0) {
       console.log('No prompts; bailing out of board gen');
-      return [];
+      return;
     }
 
     // TODO Make interface
@@ -132,7 +126,11 @@
       genBoard();
     }
     $seedStore = seedParam;
-    $allowShuffleStore = !Boolean($seedStore);
+  }
+
+  let allowShuffleParam = url.searchParams.get(PARAM_KEYS.ALLOW_SHUFFLE);
+  if (allowShuffleParam) {
+    $allowShuffleStore = true;
   }
 
   if ($boardStore.length === 0) {
@@ -173,13 +171,29 @@
     $maxDuplicatesStore = maxDuplicatesParam;
   }
 
+  const BINGO_URL = genBoardUrl({
+    phrases: $promptsStore.join('\n'),
+    win_condition: $winConditionStore,
+    board_name: $boardNameStore,
+    max_duplicates: $maxDuplicatesStore,
+    seed: $seedStore,
+  });
+  let messageAlerts: Array<{ message: string }> = [];
+
 </script>
 
-<Nav active="play" seed="{$seedStore}" bingoUrl="{genBingoUrl()}" />
+<MessageAlerts messageAlerts="{messageAlerts}" />
+<Nav active="play" />
 <main role="main" class="container">
   {#if $boardStore?.length}
+    {#if $boardNameStore}
+      <div class="pe-4">
+        <h1>{$boardNameStore}</h1>
+      </div>
+    {/if}
     <BoardToolbar
-      boardName="{$boardNameStore}"
+      handleCopyBoardUrl="{() =>
+        handleCopyToClipboard(BINGO_URL.toString(), 'Copied full URL to clipboard')}"
       maxDuplicates="{$maxDuplicatesStore}"
       rule="{rule}"
       clearBoard="{clearBoard}"

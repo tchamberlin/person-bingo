@@ -2,7 +2,7 @@
   import { Alert, Button } from 'sveltestrap';
 
   let visible = true;
-  export let message;
+  export let message: string;
   export let timeout = 5000;
   if (timeout !== null) {
     setTimeout(() => (visible = false), timeout);

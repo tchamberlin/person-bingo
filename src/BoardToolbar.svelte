@@ -35,18 +35,18 @@
   let userIsSureTheyWantToClear = false;
   let userIsSureTheyWantToSubmit = false;
 
+  export let handleCopyBoardUrl: () => void;
   export let toggleRulesModal: () => void;
-  export let genBoard: () => void;
+  export let genBoard: ({ resetSeed: boolean }) => void;
   export let clearBoard: () => void;
   export let allowShuffle: boolean;
-  export let boardName: string;
   // TODO Type rules
   export let rule;
   export let enableConfetti = false;
   export let maxDuplicates: number;
   let confettiMultiplier = 1;
-  export let toggleConfetti: () => void;
-  export let confettiIsActive: () => bool;
+  export let toggleConfetti: ({ particleCount: number }) => boolean;
+  export let confettiIsActive: () => boolean;
   let CONFETTI = confettiIsActive();
   // Force CONFETTI to update when enableConfetti does. This avoids a weird
   // bug, but could definitely be cleaner
@@ -58,11 +58,6 @@
   <div class="row align-items-center">
     <div class="col-xl-6 p-0">
       <div class="d-flex flex-row align-items-center">
-        {#if boardName}
-          <div class="pe-4">
-            <h1>{boardName}</h1>
-          </div>
-        {/if}
         <div class="pe-2">
           <button
             on:click="{handleClearBoard}"
@@ -102,9 +97,18 @@
             📜 Rules
           </button>
         </div>
+        <div class="pe-2">
+          <button
+            on:click="{handleCopyBoardUrl}"
+            class="btn btn-secondary btn-sm"
+            title="Copy board URL to clipboard"
+          >
+            📋 URL
+          </button>
+        </div>
         {#if enableConfetti}
           <div class="pe-2">
-            <div class="btn-group" role="group" aria-label="Basic example">
+            <div class="btn-group" role="group" aria-label="Confetti controls">
               <button
                 type="button"
                 class="btn btn-secondary btn-sm"
@@ -146,7 +150,7 @@
             <small>Goal: <strong>{rule.blurb}</strong></small>
           </div>
         </div>
-        <div class="ps-1">
+        <div class="ps-1 noshrink">
           <WinTypePreview rule="{rule}" />
         </div>
       </div>

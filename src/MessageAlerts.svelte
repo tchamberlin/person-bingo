@@ -11,7 +11,7 @@
 
 <script lang="ts">
   import MessageAlert from './MessageAlert.svelte';
-  export let messageAlerts;
+  export let messageAlerts: Array<{ message: string }>;
 
 </script>
 

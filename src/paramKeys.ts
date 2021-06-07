@@ -5,4 +5,5 @@ export const PARAM_KEYS = {
   CLEAR: 'clear',
   BOARD_NAME: 'name',
   MAX_DUPLICATES: 'max-duplicates',
+  ALLOW_SHUFFLE: 'allow-shuffle',
 };

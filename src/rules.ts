@@ -44,6 +44,14 @@ const heartShape = [
   [0, 0, 1, 0, 0],
 ];
 
+const smileShape = [
+  [0, 1, 0, 1, 0],
+  [0, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0],
+  [1, 0, 0, 0, 1],
+  [0, 1, 1, 1, 0],
+];
+
 export const RULES = {
   line: {
     name: 'Standard',
@@ -67,6 +75,7 @@ export const RULES = {
   anchor: genSimpleRule('Anchor', anchorShape),
   bullseye: genSimpleRule('Bullseye', bullseyeShape),
   heart: genSimpleRule('Heart', heartShape),
+  smile: genSimpleRule('Smile', smileShape),
 };
 
 function checkRowWin(board: Board): Array<string> {

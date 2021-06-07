@@ -37,7 +37,7 @@ export function stopConfetti() {
   confettiActive = false;
 }
 
-export const startConfetti = (options) => {
+export const startConfetti = (options?: {}) => {
   const animationEnd = Date.now() + duration;
   options = options || {};
   console.log(`starting confetti; end at ${animationEnd}; given options:`, options);

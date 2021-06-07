@@ -12,10 +12,9 @@
 
 <script lang="ts">
   import { Circle as CircleLoading } from 'svelte-loading-spinners';
-  import { PARAM_KEYS } from './paramKeys';
 
   import suggestions from './suggested_prompts';
-  import { shuffle, genRandomString } from './utils';
+  import { shuffle, genBoardUrl } from './utils';
   import Nav from './Nav.svelte';
   import WinTypePreview from './WinTypePreview.svelte';
   import MessageAlerts from './MessageAlerts.svelte';
@@ -25,8 +24,8 @@
   import { bitlyShortenUrl } from './shorten';
   import { RULES } from './rules';
 
-  function handleCopyToClipboard(url, message): void {
-    const promise = navigator.clipboard.writeText(url);
+  function handleCopyToClipboard(text: string, message?: string): void {
+    const promise = navigator.clipboard.writeText(text);
     // TODO: Add error messageAlert, too!
     promise.then(
       () => (messageAlerts = [...messageAlerts, { message: message || 'Copied to clipboard' }]),
@@ -34,50 +33,8 @@
     );
   }
 
-  function genSeed(prefix): string {
-    let seed;
-    if (prefix) {
-      seed = `${prefix.replaceAll(/\s+/g, '_')}-${genRandomString()}`;
-    } else {
-      seed = genRandomString();
-    }
-    return seed;
-  }
-
-  function genPhrases(): Array<string> {
-    let phrases: Array<string> = [];
-    FORM.phrases.split('\n').forEach((phrase) => {
-      const trimmed: string = phrase.trim();
-      if (trimmed.length) {
-        phrases.push(trimmed);
-      }
-    });
-    return phrases;
-  }
-
-  // TODO: optionally give seed?
-  function genBoardLink({ phrases, win_condition, board_name, max_duplicates }): string {
-    const url = new URL('/bingo.html', window.location);
-    // const url = new URL('https://person-bingo.vercel.app/bingo.html');
-    phrases.split('\n').forEach((phrase) => {
-      const trimmed: string = phrase.trim();
-      if (trimmed.length) {
-        url.searchParams.append('c', trimmed);
-      }
-    });
-
-    url.searchParams.append(PARAM_KEYS.CLEAR, true);
-    url.searchParams.append(PARAM_KEYS.WIN_CONDITION, win_condition);
-    const seed = genSeed();
-    url.searchParams.append(PARAM_KEYS.SEED, seed);
-    url.searchParams.append(PARAM_KEYS.NAME, board_name);
-    url.searchParams.append(PARAM_KEYS.MAX_DUPLICATES, max_duplicates);
-
-    return url;
-  }
-
-  function handleFormChange(FORM): void {
-    const phrases_array = FORM.phrases.split('\n').filter((phrase) => phrase.trim() !== '');
+  function handleFormChange(FORM): string {
+    const phrases_array = FORM.phrases.split('\n').filter((phrase: string) => phrase.trim() !== '');
     const unique_phrases = [...new Set(phrases_array)];
     // Set UNIQUE_ERROR state depending on whether we find duplicates or not
     UNIQUE_ERROR = phrases_array.length !== unique_phrases.length;
@@ -89,8 +46,7 @@
     IS_VALID = NUM_PHRASES >= EXPECTED_PHRASES && !UNIQUE_ERROR;
     // Remove the previous URL promise (whether it existed or not)
     SHORT_URL_PROMISE = null;
-    console.log('FORM', FORM);
-    return genBoardLink(FORM);
+    return genBoardUrl(FORM).toString();
   }
 
   function loadSuggestedPrompts(): void {
@@ -102,6 +58,10 @@
     } else {
       FORM.phrases = shuffle(suggestions).slice(0, PHRASES_LEFT).join('\n');
     }
+  }
+
+  function removeDuplicatePhrases(): void {
+    FORM.phrases = [...new Set(FORM.phrases.split('\n'))].join('\n');
   }
 
   const FREE_SPACE = 'Free Space';
@@ -117,18 +77,19 @@
 
   let ACCESS_TOKEN_MODAL_OPEN = false;
 
-  // TODO: Replace with store
-  const _prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-_prompts')) || [];
-  if (_prompts.length > 0) {
-    FORM.phrases = _prompts.filter((phrase) => phrase !== FREE_SPACE).join('\n');
-  }
-
   let FORM = {
     win_condition: DEFAULT_WIN_CONDITION,
     phrases: '',
     board_name: '',
     max_duplicates: 1,
+    allow_shuffle: false,
   };
+
+  // TODO: Replace with store
+  const _prompts: Array<string> = JSON.parse(localStorage.getItem('bingo-_prompts')) || [];
+  if (_prompts.length > 0) {
+    FORM.phrases = _prompts.filter((phrase) => phrase !== FREE_SPACE).join('\n');
+  }
 
   // Every time the form changes, update the generated Bingo URL
   $: {
@@ -136,7 +97,6 @@
   }
 
   let SHORT_URL_PROMISE = null;
-  let SHORT_URL = null;
 
   function handleUrlShortenRequest() {
     if (!$bitlyAccessTokenStore) {
@@ -148,7 +108,7 @@
       return null;
     }
   }
-  let messageAlerts = [];
+  let messageAlerts: Array<{ message: string }> = [];
 
   // Convert RULES into an array for easier parsing
   const rulesArray = Object.entries(RULES).map(([key, rule]) => ({ value: key, ...rule }));
@@ -166,7 +126,7 @@
 
   <form on:submit|preventDefault="{() => null}" id="wordsform" class="form">
     <div class="row">
-      <div class="form-group col-sm-6">
+      <div class="form-group col-sm-3">
         <label for="win-conditions">Win Condition (Board Pattern)</label>
         <div class="d-flex flex-row align-items-center">
           <select
@@ -179,12 +139,14 @@
               <option value="{value}">{name}</option>
             {/each}
           </select>
-          <WinTypePreview rule="{RULES[FORM.win_condition]}" />
+          <div class="noshrink">
+            <WinTypePreview rule="{RULES[FORM.win_condition]}" />
+          </div>
         </div>
       </div>
 
       <div class="form-group col-sm-3">
-        <label for="board-name">Board Name (optional)</label>
+        <label for="board-name">Board Name</label>
         <input
           name="board-name"
           bind:value="{FORM.board_name}"
@@ -194,16 +156,29 @@
         />
       </div>
 
-      <div class="form-group col-sm-3">
-        <label for="max-duplicates">Max Duplicates (optional)</label>
+      <div
+        class="form-group col-sm-3"
+        title="By default, every answer on the board must be unique. Use this to allow more than one instance of each answer."
+      >
+        <label for="max-duplicates">Max Duplicates</label>
         <input
           name="max-duplicates"
           type="number"
           min="1"
           bind:value="{FORM.max_duplicates}"
-          title="The number of instances of each name that are allowed on the board"
           class="form-control"
           id="max-duplicates"
+        />
+      </div>
+
+      <div class="form-check col-sm-3" title="Allow the board to be shuffled by the player">
+        <label class="form-check-label" for="allow-shuffle">Allow Shuffle</label>
+        <input
+          name="allow-shuffle"
+          type="checkbox"
+          bind:checked="{FORM.allow_shuffle}"
+          class="form-check-input"
+          id="allow-shuffle"
         />
       </div>
     </div>
@@ -220,10 +195,28 @@
         id="phrases-text"
         rows="5"></textarea>
       {#if UNIQUE_ERROR}
-        <small id="phrases-help" class="text-danger"> All lines must be unique! </small>
+        <div class="mt-1">
+          <button class="btn btn-outline-danger btn-small" on:click="{removeDuplicatePhrases}">
+            All lines must be unique! Click here to remove duplicates
+          </button>
+        </div>
       {/if}
     </div>
-    <br />
+    <div class="d-flex flex-row flex-wrap align-items-center">
+      <div class="my-2">
+        You've entered
+        <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">
+          {NUM_PHRASES}/{EXPECTED_PHRASES}
+        </span>
+        required phrases.
+        {#if NUM_PHRASES > EXPECTED_PHRASES}
+          Only {EXPECTED_PHRASES} of given phrases will be used per board.
+        {:else if NUM_PHRASES === EXPECTED_PHRASES}
+          You may add additional phrases if you want (but {EXPECTED_PHRASES}
+          of them will be randomly selected for use per-board)
+        {/if}
+      </div>
+    </div>
     <div>
       {#if IS_VALID}
         <div class="d-flex flex-row align-items-center">
@@ -260,20 +253,9 @@
           {/if}
         </div>
       {:else}
-        <div class="d-flex flex-row flex-wrap align-items-center">
-          <button class="btn btn-secondary me-2" on:click="{loadSuggestedPrompts}">
-            Fill Suggested Prompts
-          </button>
-          <div class="me-2">
-            You've entered
-            <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">
-              {NUM_PHRASES}/{EXPECTED_PHRASES}
-            </span>
-            required phrases. Either enter more above, or use this button to fill in the
-            <span class:invalid="{!IS_VALID}" class:valid="{IS_VALID}">{PHRASES_LEFT}</span>
-            remaining.
-          </div>
-        </div>
+        <button class="btn btn-secondary me-2" on:click="{loadSuggestedPrompts}">
+          Fill Suggested Prompts
+        </button>
       {/if}
     </div>
   </form>
